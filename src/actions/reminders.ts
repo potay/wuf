@@ -1,10 +1,25 @@
 "use server";
 
 import { db } from "@/db";
-import { reminders } from "@/db/schema";
-import { desc, eq, isNull, lte, and } from "drizzle-orm";
-import { v4 as uuidv4 } from "uuid";
+import { type Reminder } from "@/db/schema";
+import { Timestamp } from "firebase-admin/firestore";
 import type { ReminderCategory } from "@/lib/reminder-categories";
+
+const remindersCollection = () => db.collection("reminders");
+
+function docToReminder(doc: FirebaseFirestore.DocumentSnapshot): Reminder {
+  const data = doc.data()!;
+  return {
+    id: doc.id,
+    title: data.title,
+    notes: data.notes || null,
+    category: data.category,
+    dueAt: (data.dueAt as Timestamp).toDate(),
+    repeatInterval: data.repeatInterval || null,
+    completedAt: data.completedAt ? (data.completedAt as Timestamp).toDate() : null,
+    createdAt: (data.createdAt as Timestamp).toDate(),
+  };
+}
 
 export async function createReminder(data: {
   title: string;
@@ -14,67 +29,70 @@ export async function createReminder(data: {
   repeatInterval?: string;
 }) {
   const now = new Date();
+  const docRef = remindersCollection().doc();
   const reminder = {
-    id: uuidv4(),
     title: data.title,
     notes: data.notes || null,
     category: data.category,
-    dueAt: data.dueAt,
+    dueAt: Timestamp.fromDate(data.dueAt),
     repeatInterval: data.repeatInterval || null,
     completedAt: null,
-    createdAt: now,
+    createdAt: Timestamp.fromDate(now),
   };
-  await db.insert(reminders).values(reminder);
-  return reminder;
+  await docRef.set(reminder);
+  return { id: docRef.id, ...reminder, dueAt: data.dueAt, createdAt: now };
 }
 
 export async function completeReminder(id: string) {
-  await db
-    .update(reminders)
-    .set({ completedAt: new Date() })
-    .where(eq(reminders.id, id));
+  await remindersCollection().doc(id).update({
+    completedAt: Timestamp.fromDate(new Date()),
+  });
 }
 
 export async function uncompleteReminder(id: string) {
-  await db
-    .update(reminders)
-    .set({ completedAt: null })
-    .where(eq(reminders.id, id));
+  await remindersCollection().doc(id).update({
+    completedAt: null,
+  });
 }
 
 export async function deleteReminder(id: string) {
-  await db.delete(reminders).where(eq(reminders.id, id));
+  await remindersCollection().doc(id).delete();
 }
 
-export async function getUpcomingReminders(limit: number = 20) {
-  return db
-    .select()
-    .from(reminders)
-    .where(isNull(reminders.completedAt))
-    .orderBy(reminders.dueAt)
-    .limit(limit);
+export async function getUpcomingReminders(limit: number = 20): Promise<Reminder[]> {
+  const snapshot = await remindersCollection()
+    .where("completedAt", "==", null)
+    .orderBy("dueAt", "asc")
+    .limit(limit)
+    .get();
+
+  return snapshot.docs.map(docToReminder);
 }
 
-export async function getOverdueReminders() {
+export async function getOverdueReminders(): Promise<Reminder[]> {
   const now = new Date();
-  return db
-    .select()
-    .from(reminders)
-    .where(and(isNull(reminders.completedAt), lte(reminders.dueAt, now)))
-    .orderBy(reminders.dueAt);
+  const snapshot = await remindersCollection()
+    .where("completedAt", "==", null)
+    .where("dueAt", "<=", Timestamp.fromDate(now))
+    .orderBy("dueAt", "asc")
+    .get();
+
+  return snapshot.docs.map(docToReminder);
 }
 
-export async function getAllReminders() {
-  return db
-    .select()
-    .from(reminders)
-    .orderBy(desc(reminders.createdAt));
+export async function getAllReminders(): Promise<Reminder[]> {
+  const snapshot = await remindersCollection()
+    .orderBy("createdAt", "desc")
+    .get();
+
+  return snapshot.docs.map(docToReminder);
 }
 
-export async function getRemindersByCategory(category: ReminderCategory) {
-  return db
-    .select()
-    .from(reminders)
-    .where(eq(reminders.category, category))
-    .orderBy(reminders.dueAt);
+export async function getRemindersByCategory(category: ReminderCategory): Promise<Reminder[]> {
+  const snapshot = await remindersCollection()
+    .where("category", "==", category)
+    .orderBy("dueAt", "asc")
+    .get();
+
+  return snapshot.docs.map(docToReminder);
 }

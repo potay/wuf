@@ -1,5 +1,3 @@
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
-
 // All event types that can be logged for Toro
 export const EVENT_TYPES = [
   "pee",
@@ -80,27 +78,22 @@ export const QUICK_LOG_TYPES: EventType[] = [
   "note",
 ];
 
-export const events = sqliteTable("events", {
-  id: text("id").primaryKey(),
-  type: text("type").notNull(),
-  notes: text("notes"),
-  metadata: text("metadata"), // JSON string for extra data (weight value, vaccine name, etc.)
-  occurredAt: integer("occurred_at", { mode: "timestamp" }).notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-});
+export interface Event {
+  id: string;
+  type: EventType;
+  notes: string | null;
+  metadata: string | null;
+  occurredAt: Date;
+  createdAt: Date;
+}
 
-export const reminders = sqliteTable("reminders", {
-  id: text("id").primaryKey(),
-  title: text("title").notNull(),
-  notes: text("notes"),
-  category: text("category").notNull().default("general"), // vaccination, feeding, vet, medication, general
-  dueAt: integer("due_at", { mode: "timestamp" }).notNull(),
-  repeatInterval: text("repeat_interval"), // daily, weekly, monthly, or null for one-time
-  completedAt: integer("completed_at", { mode: "timestamp" }),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-});
-
-export type Event = typeof events.$inferSelect;
-export type NewEvent = typeof events.$inferInsert;
-export type Reminder = typeof reminders.$inferSelect;
-export type NewReminder = typeof reminders.$inferInsert;
+export interface Reminder {
+  id: string;
+  title: string;
+  notes: string | null;
+  category: string;
+  dueAt: Date;
+  repeatInterval: string | null;
+  completedAt: Date | null;
+  createdAt: Date;
+}

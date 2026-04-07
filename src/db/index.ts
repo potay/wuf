@@ -1,19 +1,17 @@
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import * as schema from "@/db/schema";
-import path from "path";
+import { initializeApp, getApps } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
 
-const DB_PATH = process.env.DATABASE_URL || path.join(process.cwd(), "wuf.db");
-
-// Use a global singleton to avoid multiple connections during hot reload and build workers
-const globalForDb = globalThis as unknown as { __wufDb?: ReturnType<typeof drizzle> };
-
-function createDb() {
-  const sqlite = new Database(DB_PATH);
-  sqlite.pragma("journal_mode = WAL");
-  sqlite.pragma("busy_timeout = 5000");
-  sqlite.pragma("foreign_keys = ON");
-  return drizzle(sqlite, { schema });
+if (getApps().length === 0) {
+  if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    // Running locally with a service account key file
+    initializeApp();
+  } else if (process.env.FIREBASE_PROJECT_ID) {
+    // Running on Cloud Run with Application Default Credentials
+    initializeApp({ projectId: process.env.FIREBASE_PROJECT_ID });
+  } else {
+    // Fallback: detect from environment (Cloud Run sets this automatically)
+    initializeApp();
+  }
 }
 
-export const db = globalForDb.__wufDb ?? (globalForDb.__wufDb = createDb());
+export const db = getFirestore();
