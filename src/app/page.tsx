@@ -4,7 +4,7 @@ import { CrateTimer } from "@/components/crate-timer";
 import { QuickLogButtons } from "@/components/quick-log-buttons";
 import { TodayStats } from "@/components/today-stats";
 import { ActivityFeed } from "@/components/activity-feed";
-import { formatDateTime } from "@/lib/utils";
+import { LocalTime } from "@/components/local-time";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -80,7 +80,7 @@ export default async function HomePage() {
                     {reminder.title}
                   </div>
                   <div className="text-xs text-stone-400">
-                    {formatDateTime(reminder.dueAt)}
+                    <LocalTime date={reminder.dueAt} format="datetime" />
                   </div>
                 </div>
               </div>

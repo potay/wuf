@@ -1,5 +1,5 @@
 import { EVENT_TYPE_CONFIG, type EventType, type Event } from "@/db/schema";
-import { formatTime, timeAgo } from "@/lib/utils";
+import { LocalTime } from "@/components/local-time";
 
 interface ActivityFeedProps {
   events: Event[];
@@ -42,9 +42,11 @@ export function ActivityFeed({ events, showDate = false }: ActivityFeedProps) {
               )}
             </div>
             <div className="text-xs text-stone-400 text-right shrink-0">
-              <div>{formatTime(event.occurredAt)}</div>
+              <div><LocalTime date={event.occurredAt} format="time" /></div>
               {showDate && (
-                <div className="text-stone-300">{timeAgo(event.occurredAt)}</div>
+                <div className="text-stone-300">
+                  <LocalTime date={event.occurredAt} format="ago" />
+                </div>
               )}
             </div>
           </div>
