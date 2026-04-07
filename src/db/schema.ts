@@ -2,6 +2,7 @@
 export const EVENT_TYPES = [
   "pee",
   "poop",
+  "accident",
   "meal",
   "water",
   "crate_in",
@@ -27,6 +28,7 @@ export const EVENT_TYPE_CONFIG: Record<
 > = {
   pee: { label: "Pee", emoji: "💧", color: "bg-yellow-100 text-yellow-800" },
   poop: { label: "Poop", emoji: "💩", color: "bg-amber-100 text-amber-800" },
+  accident: { label: "Accident", emoji: "🚨", color: "bg-red-100 text-red-800" },
   meal: { label: "Meal", emoji: "🍖", color: "bg-orange-100 text-orange-800" },
   water: { label: "Water", emoji: "💦", color: "bg-blue-100 text-blue-800" },
   crate_in: {
@@ -68,6 +70,7 @@ export const EVENT_TYPE_CONFIG: Record<
 export const QUICK_LOG_TYPES: EventType[] = [
   "pee",
   "poop",
+  "accident",
   "meal",
   "water",
   "crate_in",
@@ -98,5 +101,30 @@ export interface Reminder {
   dueAt: Date;
   repeatInterval: string | null;
   completedAt: Date | null;
+  createdAt: Date;
+}
+
+export interface SocializationItem {
+  id: string;
+  category: string;
+  label: string;
+  completedAt: Date | null;
+  notes: string | null;
+}
+
+export interface ScheduleItem {
+  id: string;
+  time: string; // HH:mm format
+  activity: string;
+  notes: string | null;
+  enabled: boolean;
+}
+
+export interface Milestone {
+  id: string;
+  title: string;
+  notes: string | null;
+  photoUrl: string | null;
+  occurredAt: Date;
   createdAt: Date;
 }
