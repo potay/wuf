@@ -14,9 +14,12 @@ const PRIMARY_NAV = [
 const MORE_NAV = [
   { href: "/schedule", label: "Schedule", icon: "📅" },
   { href: "/weight", label: "Weight", icon: "⚖️" },
+  { href: "/tricks", label: "Tricks", icon: "🎓" },
   { href: "/reminders", label: "Reminders", icon: "🔔" },
+  { href: "/medications", label: "Medications", icon: "💊" },
   { href: "/socialization", label: "Socialization", icon: "🌍" },
   { href: "/milestones", label: "Milestones", icon: "📸" },
+  { href: "/profile", label: "Profile", icon: "🐶" },
 ] as const;
 
 const ALL_MORE_HREFS = MORE_NAV.map((i) => i.href);

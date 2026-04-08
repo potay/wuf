@@ -15,13 +15,24 @@ export function LogForm() {
   const [occurredAt, setOccurredAt] = useState(formatDateForInput(new Date()));
   const [submitted, setSubmitted] = useState(false);
 
+  // Feeding details
+  const [foodName, setFoodName] = useState("");
+  const [foodAmount, setFoodAmount] = useState("");
+  const [foodUnit, setFoodUnit] = useState("cups");
+  const [foodFinished, setFoodFinished] = useState(true);
+
+  const isMeal = selectedType === "meal";
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const metadata = isMeal && foodName
+      ? JSON.stringify({ food: foodName, amount: foodAmount, unit: foodUnit, finished: foodFinished })
+      : undefined;
     startTransition(async () => {
       await logEvent(
         selectedType,
         notes || undefined,
-        undefined,
+        metadata,
         customTime ? new Date(occurredAt) : undefined
       );
       setNotes("");
@@ -63,6 +74,55 @@ export function LogForm() {
           })}
         </div>
       </div>
+
+      {/* Feeding details */}
+      {isMeal && (
+        <div className="bg-orange-50 rounded-xl border border-orange-200 p-4 space-y-3">
+          <label className="text-sm font-semibold text-orange-700 uppercase tracking-wide block">
+            Feeding details (optional)
+          </label>
+          <input
+            type="text"
+            value={foodName}
+            onChange={(e) => setFoodName(e.target.value)}
+            placeholder="Food name (e.g., Purina Pro Plan)"
+            className="w-full p-2.5 rounded-lg border border-orange-200 bg-white text-sm
+              focus:outline-none focus:ring-2 focus:ring-amber-300 placeholder:text-stone-300"
+          />
+          <div className="flex gap-2">
+            <input
+              type="number"
+              step="0.25"
+              min="0"
+              value={foodAmount}
+              onChange={(e) => setFoodAmount(e.target.value)}
+              placeholder="Amount"
+              className="flex-1 p-2.5 rounded-lg border border-orange-200 bg-white text-sm
+                focus:outline-none focus:ring-2 focus:ring-amber-300 placeholder:text-stone-300"
+            />
+            <select
+              value={foodUnit}
+              onChange={(e) => setFoodUnit(e.target.value)}
+              className="p-2.5 rounded-lg border border-orange-200 bg-white text-sm
+                focus:outline-none focus:ring-2 focus:ring-amber-300"
+            >
+              <option value="cups">cups</option>
+              <option value="oz">oz</option>
+              <option value="grams">grams</option>
+              <option value="tbsp">tbsp</option>
+            </select>
+          </div>
+          <label className="flex items-center gap-2 text-sm text-orange-700">
+            <input
+              type="checkbox"
+              checked={foodFinished}
+              onChange={(e) => setFoodFinished(e.target.checked)}
+              className="rounded border-orange-300 text-amber-500 focus:ring-amber-300"
+            />
+            Finished entire meal
+          </label>
+        </div>
+      )}
 
       {/* Notes */}
       <div>

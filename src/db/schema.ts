@@ -128,3 +128,49 @@ export interface Milestone {
   occurredAt: Date;
   createdAt: Date;
 }
+
+export interface PuppyProfile {
+  name: string;
+  breed: string;
+  birthday: string | null; // YYYY-MM-DD
+  sex: string | null;
+  color: string | null;
+  microchipId: string | null;
+  vetName: string | null;
+  vetPhone: string | null;
+  emergencyVetName: string | null;
+  emergencyVetPhone: string | null;
+  insuranceProvider: string | null;
+  insurancePolicyNumber: string | null;
+  notes: string | null;
+}
+
+export type TrickStatus = "learning" | "learned" | "mastered";
+
+export interface Trick {
+  id: string;
+  name: string;
+  status: TrickStatus;
+  startedAt: Date;
+  masteredAt: Date | null;
+  notes: string | null;
+}
+
+export interface Medication {
+  id: string;
+  name: string;
+  dosage: string;
+  frequency: string;
+  startDate: Date;
+  endDate: Date | null;
+  active: boolean;
+  notes: string | null;
+  createdAt: Date;
+}
+
+export interface FeedingDetails {
+  food: string;
+  amount: string;
+  unit: string;
+  finished: boolean;
+}
