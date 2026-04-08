@@ -1,22 +1,50 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatDuration } from "@/lib/utils";
+import { sendNotification } from "@/components/notification-provider";
 
 interface CrateTimerProps {
   inCrate: boolean;
   since: Date | string | null;
 }
 
+const ONE_HOUR = 60 * 60 * 1000;
+const TWO_HOURS = 2 * ONE_HOUR;
+
 export function CrateTimer({ inCrate, since }: CrateTimerProps) {
   const [elapsed, setElapsed] = useState(0);
   const sinceMs = since ? new Date(since).getTime() : null;
+  const notifiedWarning = useRef(false);
+  const notifiedUrgent = useRef(false);
+
+  useEffect(() => {
+    // Reset notification flags when crate state changes
+    notifiedWarning.current = false;
+    notifiedUrgent.current = false;
+  }, [sinceMs]);
 
   useEffect(() => {
     if (!inCrate || !sinceMs) return;
 
     const update = () => {
-      setElapsed(Date.now() - sinceMs);
+      const now = Date.now() - sinceMs;
+      setElapsed(now);
+
+      // Send notifications at thresholds
+      if (now >= TWO_HOURS && !notifiedUrgent.current) {
+        notifiedUrgent.current = true;
+        sendNotification(
+          "🚨 Toro needs out!",
+          "Toro has been in the crate for over 2 hours. Time to let her out!"
+        );
+      } else if (now >= ONE_HOUR && !notifiedWarning.current) {
+        notifiedWarning.current = true;
+        sendNotification(
+          "🏠 Crate check-in",
+          "Toro has been in the crate for 1 hour. Plan to let her out soon."
+        );
+      }
     };
     update();
     const interval = setInterval(update, 1000);
@@ -33,8 +61,8 @@ export function CrateTimer({ inCrate, since }: CrateTimerProps) {
     );
   }
 
-  const isLong = elapsed > 2 * 60 * 60 * 1000; // > 2 hours
-  const isWarning = elapsed > 1 * 60 * 60 * 1000; // > 1 hour
+  const isLong = elapsed > TWO_HOURS;
+  const isWarning = elapsed > ONE_HOUR;
 
   return (
     <div

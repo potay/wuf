@@ -1,10 +1,13 @@
 import { getCrateStatus, getEventsForDay, getTodayStats, getLastEventOfType } from "@/actions/events";
 import { getUpcomingReminders } from "@/actions/reminders";
+import { getSchedule } from "@/actions/schedule";
 import { CrateTimer } from "@/components/crate-timer";
 import { QuickLogButtons } from "@/components/quick-log-buttons";
 import { TodayStats } from "@/components/today-stats";
 import { TimeSince } from "@/components/time-since";
 import { ActivityFeed } from "@/components/activity-feed";
+import { NotificationProvider } from "@/components/notification-provider";
+import { ScheduleNotifier } from "@/components/schedule-notifier";
 import { LocalTime } from "@/components/local-time";
 import { type EventType } from "@/db/schema";
 import Link from "next/link";
@@ -14,12 +17,13 @@ export const dynamic = "force-dynamic";
 const TIME_SINCE_TYPES: EventType[] = ["pee", "poop", "meal", "water"];
 
 export default async function HomePage() {
-  const [crateStatus, todayEvents, todayStats, upcomingReminders, ...lastEventResults] =
+  const [crateStatus, todayEvents, todayStats, upcomingReminders, schedule, ...lastEventResults] =
     await Promise.all([
       getCrateStatus(),
       getEventsForDay(new Date()),
       getTodayStats(),
       getUpcomingReminders(5),
+      getSchedule(),
       ...TIME_SINCE_TYPES.map((type) => getLastEventOfType(type)),
     ]);
 
@@ -31,6 +35,11 @@ export default async function HomePage() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
+      {/* Notification permission prompt + schedule checker */}
+      <NotificationProvider>
+        <ScheduleNotifier items={schedule} />
+      </NotificationProvider>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
