@@ -1,6 +1,15 @@
 "use client";
 
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
+
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  return Uint8Array.from(rawData, (char) => char.charCodeAt(0));
+}
 
 function getPermission(): NotificationPermission {
   if (typeof window === "undefined" || !("Notification" in window)) return "default";
@@ -8,10 +17,32 @@ function getPermission(): NotificationPermission {
 }
 
 function subscribeToPermission(callback: () => void) {
-  // No native event for permission changes, but we poll rarely
-  // The main update happens after the user clicks "Enable"
   const interval = setInterval(callback, 5000);
   return () => clearInterval(interval);
+}
+
+async function registerAndSubscribe() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+
+  const registration = await navigator.serviceWorker.register("/sw.js");
+  await navigator.serviceWorker.ready;
+
+  // Check for existing subscription
+  let subscription = await registration.pushManager.getSubscription();
+
+  if (!subscription) {
+    subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
+    });
+  }
+
+  // Send subscription to server
+  await fetch("/api/push/subscribe", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(subscription.toJSON()),
+  });
 }
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
@@ -21,9 +52,20 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     () => "default" as NotificationPermission
   );
 
+  const registered = useRef(false);
+
+  useEffect(() => {
+    if (permission === "granted" && !registered.current) {
+      registered.current = true;
+      registerAndSubscribe().catch(console.error);
+    }
+  }, [permission]);
+
   const handleEnable = useCallback(async () => {
-    await Notification.requestPermission();
-    // Permission state is read reactively via useSyncExternalStore
+    const result = await Notification.requestPermission();
+    if (result === "granted") {
+      await registerAndSubscribe();
+    }
   }, []);
 
   if (permission !== "default") {
@@ -39,7 +81,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             Enable notifications?
           </div>
           <div className="text-xs text-amber-600">
-            Get alerts for crate time, schedule reminders, and more
+            Get push alerts for crate time, schedule reminders, and more
           </div>
         </div>
         <button
@@ -55,12 +97,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   );
 }
 
+/** Fallback for when tab is open - uses basic Notification API */
 export function sendNotification(title: string, body: string) {
   if (typeof window === "undefined" || !("Notification" in window)) return;
   if (Notification.permission !== "granted") return;
-  new Notification(title, {
-    body,
-    icon: "/icon-192.png",
-    tag: title,
-  });
+  new Notification(title, { body, icon: "/icon-192.png", tag: title });
 }
