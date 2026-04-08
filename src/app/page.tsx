@@ -8,8 +8,10 @@ import { TimeSince } from "@/components/time-since";
 import { ActivityFeed } from "@/components/activity-feed";
 import { NotificationProvider } from "@/components/notification-provider";
 import { ScheduleNotifier } from "@/components/schedule-notifier";
+import { TimezoneSetter } from "@/components/timezone-setter";
 import { LocalTime } from "@/components/local-time";
 import { type EventType } from "@/db/schema";
+import { getUserTimezone, getDayBoundsInTimezone } from "@/lib/timezone";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -17,11 +19,14 @@ export const dynamic = "force-dynamic";
 const TIME_SINCE_TYPES: EventType[] = ["pee", "poop", "meal", "water"];
 
 export default async function HomePage() {
+  const tz = await getUserTimezone();
+  const { start, end } = getDayBoundsInTimezone(new Date(), tz);
+
   const [crateStatus, todayEvents, todayStats, upcomingReminders, schedule, ...lastEventResults] =
     await Promise.all([
       getCrateStatus(),
-      getEventsForDay(new Date()),
-      getTodayStats(),
+      getEventsForDay(start, end),
+      getTodayStats(start, end),
       getUpcomingReminders(5),
       getSchedule(),
       ...TIME_SINCE_TYPES.map((type) => getLastEventOfType(type)),
@@ -35,6 +40,8 @@ export default async function HomePage() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
+      <TimezoneSetter />
+
       {/* Notification permission prompt + schedule checker */}
       <NotificationProvider>
         <ScheduleNotifier items={schedule} />

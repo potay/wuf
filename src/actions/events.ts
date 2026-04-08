@@ -44,15 +44,10 @@ export async function deleteEvent(id: string) {
   await eventsCollection().doc(id).delete();
 }
 
-export async function getEventsForDay(date: Date): Promise<Event[]> {
-  const startOfDay = new Date(date);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(date);
-  endOfDay.setHours(23, 59, 59, 999);
-
+export async function getEventsForDay(start: Date, end: Date): Promise<Event[]> {
   const snapshot = await eventsCollection()
-    .where("occurredAt", ">=", Timestamp.fromDate(startOfDay))
-    .where("occurredAt", "<=", Timestamp.fromDate(endOfDay))
+    .where("occurredAt", ">=", Timestamp.fromDate(start))
+    .where("occurredAt", "<=", Timestamp.fromDate(end))
     .orderBy("occurredAt", "desc")
     .get();
 
@@ -121,8 +116,8 @@ export async function getAllEvents(limit: number = 100): Promise<Event[]> {
   return snapshot.docs.map(docToEvent);
 }
 
-export async function getTodayStats(): Promise<Partial<Record<EventType, number>>> {
-  const todayEvents = await getEventsForDay(new Date());
+export async function getTodayStats(start: Date, end: Date): Promise<Partial<Record<EventType, number>>> {
+  const todayEvents = await getEventsForDay(start, end);
   const counts: Partial<Record<EventType, number>> = {};
   for (const event of todayEvents) {
     counts[event.type] = (counts[event.type] || 0) + 1;
