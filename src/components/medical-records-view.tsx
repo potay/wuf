@@ -9,7 +9,33 @@ import {
   MEDICAL_RECORD_CATEGORIES,
 } from "@/db/schema";
 import { createMedicalRecord, deleteMedicalRecord } from "@/actions/medical-records";
+import { createReminder } from "@/actions/reminders";
 import { formatDate } from "@/lib/utils";
+import type { ReminderCategory } from "@/lib/reminder-categories";
+
+interface ParsedRecord {
+  type?: string;
+  title?: string;
+  date?: string;
+  category?: MedicalRecordCategory;
+  vet?: { name?: string; phone?: string; provider?: string };
+  line_items?: { description: string; cost: number; notes?: string }[];
+  total_cost?: number;
+  vaccinations?: { name: string; date: string; notes?: string }[];
+  medications?: { name: string; dosage: string; frequency: string; notes?: string }[];
+  reminders?: { title: string; due_description: string; due_date?: string | null }[];
+  insurance?: {
+    provider?: string;
+    policy_number?: string;
+    start_date?: string;
+    end_date?: string;
+    premium?: string;
+    deductible?: string;
+    annual_limit?: string;
+    coverage_percentage?: string;
+  };
+  notes?: string;
+}
 
 interface MedicalRecordsViewProps {
   records: MedicalRecord[];
@@ -18,14 +44,90 @@ interface MedicalRecordsViewProps {
 export function MedicalRecordsView({ records }: MedicalRecordsViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [isAdding, setIsAdding] = useState(false);
+  const [mode, setMode] = useState<"idle" | "smart" | "manual">("idle");
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState<MedicalRecordCategory>("vet_visit");
   const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
   const [files, setFiles] = useState<MedicalRecordFile[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [parsing, setParsing] = useState(false);
+  const [parsed, setParsed] = useState<ParsedRecord | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  async function handleSmartUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
+
+    const file = fileList[0];
+    setParsing(true);
+
+    // Upload the file first
+    const uploadForm = new FormData();
+    uploadForm.append("file", file);
+    const uploadRes = await fetch("/api/upload", { method: "POST", body: uploadForm });
+    let uploadedFile: MedicalRecordFile | null = null;
+    if (uploadRes.ok) {
+      uploadedFile = await uploadRes.json();
+    }
+
+    // Parse the file with AI
+    const parseForm = new FormData();
+    parseForm.append("file", file);
+    const parseRes = await fetch("/api/parse-record", { method: "POST", body: parseForm });
+
+    if (parseRes.ok) {
+      const data: ParsedRecord = await parseRes.json();
+      setParsed(data);
+      // Auto-fill form
+      if (data.title) setTitle(data.title);
+      if (data.date) setDate(data.date);
+      if (data.category) setCategory(data.category);
+      // Build notes from parsed data
+      const notesParts: string[] = [];
+      if (data.vet?.name) notesParts.push(`Vet: ${data.vet.name}`);
+      if (data.vet?.provider) notesParts.push(`Provider: ${data.vet.provider}`);
+      if (data.total_cost) notesParts.push(`Total: $${data.total_cost.toFixed(2)}`);
+      if (data.line_items?.length) {
+        notesParts.push("\nServices:");
+        data.line_items.forEach((item) => {
+          notesParts.push(`- ${item.description}${item.cost ? ` ($${item.cost.toFixed(2)})` : ""}`);
+          if (item.notes) notesParts.push(`  ${item.notes}`);
+        });
+      }
+      if (data.vaccinations?.length) {
+        notesParts.push("\nVaccinations:");
+        data.vaccinations.forEach((v) => {
+          notesParts.push(`- ${v.name}${v.notes ? ` (${v.notes})` : ""}`);
+        });
+      }
+      if (data.medications?.length) {
+        notesParts.push("\nMedications:");
+        data.medications.forEach((m) => {
+          notesParts.push(`- ${m.name} ${m.dosage}, ${m.frequency}`);
+        });
+      }
+      if (data.insurance) {
+        const ins = data.insurance;
+        notesParts.push(`\nInsurance: ${ins.provider || ""}`);
+        if (ins.policy_number) notesParts.push(`Policy: ${ins.policy_number}`);
+        if (ins.coverage_percentage) notesParts.push(`Coverage: ${ins.coverage_percentage}`);
+        if (ins.deductible) notesParts.push(`Deductible: ${ins.deductible}`);
+        if (ins.annual_limit) notesParts.push(`Annual limit: ${ins.annual_limit}`);
+        if (ins.premium) notesParts.push(`Premium: ${ins.premium}`);
+      }
+      if (data.notes) notesParts.push(`\n${data.notes}`);
+      setNotes(notesParts.join("\n"));
+    }
+
+    if (uploadedFile) {
+      setFiles([uploadedFile]);
+    }
+
+    setParsing(false);
+    setMode("smart");
+    e.target.value = "";
+  }
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const fileList = e.target.files;
@@ -62,13 +164,38 @@ export function MedicalRecordsView({ records }: MedicalRecordsViewProps) {
         notes: notes || undefined,
         files,
       });
-      setTitle("");
-      setNotes("");
-      setFiles([]);
-      setCategory("vet_visit");
-      setIsAdding(false);
+
+      // Auto-create reminders from parsed data
+      if (parsed?.reminders) {
+        for (const reminder of parsed.reminders) {
+          if (reminder.due_date) {
+            await createReminder({
+              title: reminder.title,
+              category: "vet" as ReminderCategory,
+              dueAt: new Date(reminder.due_date + "T09:00:00"),
+              notes: reminder.due_description,
+            });
+          }
+        }
+      }
+
+      resetForm();
       router.refresh();
     });
+  }
+
+  function resetForm() {
+    setTitle("");
+    setNotes("");
+    setFiles([]);
+    setCategory("vet_visit");
+    setDate(new Date().toISOString().split("T")[0]);
+    setParsed(null);
+    setMode("idle");
+  }
+
+  function removeFile(index: number) {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   }
 
   function handleDelete(id: string) {
@@ -79,10 +206,6 @@ export function MedicalRecordsView({ records }: MedicalRecordsViewProps) {
     });
   }
 
-  function removeFile(index: number) {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
-  }
-
   // Group by category
   const grouped = new Map<MedicalRecordCategory, MedicalRecord[]>();
   for (const record of records) {
@@ -91,11 +214,59 @@ export function MedicalRecordsView({ records }: MedicalRecordsViewProps) {
     grouped.set(record.category, existing);
   }
 
+  const isFormOpen = mode === "smart" || mode === "manual";
+
   return (
     <div className="space-y-6">
-      {/* Add record */}
-      {isAdding ? (
+      {/* Add record buttons */}
+      {!isFormOpen && !parsing && (
+        <div className="space-y-2">
+          <label
+            className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl bg-amber-500 text-white
+              font-semibold text-sm cursor-pointer hover:bg-amber-600 active:scale-[0.98] transition-all"
+          >
+            <input
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.webp"
+              onChange={handleSmartUpload}
+              className="hidden"
+            />
+            <span className="text-lg">🤖</span>
+            Smart upload (auto-parse PDF)
+          </label>
+          <button
+            onClick={() => setMode("manual")}
+            className="w-full py-3 rounded-2xl border-2 border-dashed border-stone-200 text-stone-400
+              hover:border-amber-300 hover:text-amber-500 transition-colors text-sm font-medium"
+          >
+            + Add manually
+          </button>
+        </div>
+      )}
+
+      {/* Parsing indicator */}
+      {parsing && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center">
+          <div className="text-3xl mb-2 animate-pulse">🤖</div>
+          <div className="text-sm font-medium text-amber-800">Parsing document...</div>
+          <div className="text-xs text-amber-600 mt-1">Extracting vet info, vaccines, meds, and reminders</div>
+        </div>
+      )}
+
+      {/* Form (for both smart and manual mode) */}
+      {isFormOpen && (
         <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-stone-200 p-4 space-y-3">
+          {parsed && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-xs text-green-700">
+              <span className="font-semibold">Auto-filled from document.</span> Review and edit below, then save.
+              {parsed.reminders && parsed.reminders.length > 0 && (
+                <span className="block mt-1">
+                  {parsed.reminders.length} reminder{parsed.reminders.length > 1 ? "s" : ""} will be auto-created.
+                </span>
+              )}
+            </div>
+          )}
+
           <input
             type="text"
             value={title}
@@ -137,44 +308,19 @@ export function MedicalRecordsView({ records }: MedicalRecordsViewProps) {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Notes (optional)"
-            rows={2}
+            rows={notes.split("\n").length > 5 ? Math.min(notes.split("\n").length + 1, 15) : 3}
             className="w-full p-2.5 rounded-lg border border-stone-200 text-sm
               focus:outline-none focus:ring-2 focus:ring-amber-300 placeholder:text-stone-300 resize-none"
           />
 
-          {/* File upload */}
+          {/* File upload for manual mode or additional files */}
           <div>
             <label className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2 block">
-              Attach files
-            </label>
-            <label
-              className={`flex items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed
-                cursor-pointer transition-colors ${
-                  uploading
-                    ? "border-amber-300 bg-amber-50 text-amber-500"
-                    : "border-stone-200 text-stone-400 hover:border-amber-300 hover:text-amber-500"
-                }`}
-            >
-              <input
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.webp"
-                multiple
-                onChange={handleFileUpload}
-                className="hidden"
-                disabled={uploading}
-              />
-              {uploading ? (
-                <span className="text-sm">Uploading...</span>
-              ) : (
-                <>
-                  <span className="text-lg">📎</span>
-                  <span className="text-sm">PDF, photo, or camera</span>
-                </>
-              )}
+              {files.length > 0 ? "Attached files" : "Attach files"}
             </label>
 
             {files.length > 0 && (
-              <div className="mt-2 space-y-1">
+              <div className="mb-2 space-y-1">
                 {files.map((file, i) => (
                   <div
                     key={i}
@@ -194,12 +340,31 @@ export function MedicalRecordsView({ records }: MedicalRecordsViewProps) {
                 ))}
               </div>
             )}
+
+            <label
+              className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed
+                cursor-pointer transition-colors text-xs ${
+                  uploading
+                    ? "border-amber-300 bg-amber-50 text-amber-500"
+                    : "border-stone-200 text-stone-400 hover:border-amber-300 hover:text-amber-500"
+                }`}
+            >
+              <input
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.webp"
+                multiple
+                onChange={handleFileUpload}
+                className="hidden"
+                disabled={uploading}
+              />
+              {uploading ? "Uploading..." : "📎 Add more files"}
+            </label>
           </div>
 
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => { setIsAdding(false); setFiles([]); }}
+              onClick={resetForm}
               className="flex-1 py-3 rounded-xl border border-stone-200 text-stone-500 text-sm"
             >
               Cancel
@@ -213,22 +378,14 @@ export function MedicalRecordsView({ records }: MedicalRecordsViewProps) {
             </button>
           </div>
         </form>
-      ) : (
-        <button
-          onClick={() => setIsAdding(true)}
-          className="w-full py-3 rounded-2xl border-2 border-dashed border-stone-200 text-stone-400
-            hover:border-amber-300 hover:text-amber-500 transition-colors text-sm font-medium"
-        >
-          + Add medical record
-        </button>
       )}
 
       {/* Records list */}
-      {records.length === 0 && !isAdding && (
+      {records.length === 0 && mode === "idle" && (
         <div className="text-center py-8 text-stone-400">
           <div className="text-3xl mb-2">🗂️</div>
           <p className="text-sm">No medical records yet</p>
-          <p className="text-xs mt-1">Upload PDFs and photos from the vet</p>
+          <p className="text-xs mt-1">Upload a PDF from your vet and we&apos;ll extract the details</p>
         </div>
       )}
 
@@ -271,7 +428,9 @@ export function MedicalRecordsView({ records }: MedicalRecordsViewProps) {
                     {isExpanded && (
                       <div className="px-3 pb-3 space-y-2 border-t border-stone-50 pt-2">
                         {record.notes && (
-                          <p className="text-xs text-stone-500">{record.notes}</p>
+                          <pre className="text-xs text-stone-500 whitespace-pre-wrap font-sans">
+                            {record.notes}
+                          </pre>
                         )}
 
                         {record.files.length > 0 && (
@@ -287,7 +446,7 @@ export function MedicalRecordsView({ records }: MedicalRecordsViewProps) {
                               >
                                 <span>{file.contentType.includes("pdf") ? "📄" : "🖼️"}</span>
                                 <span className="flex-1 truncate text-stone-600">{file.name}</span>
-                                <span className="text-amber-500 font-medium shrink-0">View →</span>
+                                <span className="text-amber-500 font-medium shrink-0">View</span>
                               </a>
                             ))}
                           </div>
