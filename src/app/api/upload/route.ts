@@ -55,9 +55,7 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  // Make the file publicly readable
-  await blob.makePublic();
-
+  // Bucket has uniform bucket-level access with allUsers:objectViewer
   const url = `https://storage.googleapis.com/${BUCKET_NAME}/${storagePath}`;
 
   return NextResponse.json({

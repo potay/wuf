@@ -119,10 +119,13 @@ export async function POST(request: NextRequest) {
       messages: [{ role: "user", content }],
     });
 
-    const responseText = response.content
+    let responseText = response.content
       .filter((block): block is Anthropic.TextBlock => block.type === "text")
       .map((block) => block.text)
       .join("");
+
+    // Strip markdown code blocks if present
+    responseText = responseText.replace(/^```(?:json)?\s*/m, "").replace(/\s*```\s*$/m, "").trim();
 
     const parsed = JSON.parse(responseText);
     return NextResponse.json(parsed);
