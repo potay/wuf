@@ -8,8 +8,8 @@ import {
   type EventType,
   type Event,
 } from "@/db/schema";
-import { deleteEvent } from "@/actions/events";
-import { formatTime, formatDate } from "@/lib/utils";
+import { deleteEvent, updateEventTime, updateEventNotes } from "@/actions/events";
+import { formatTime, formatDate, formatDateForInput } from "@/lib/utils";
 
 interface HistoryListProps {
   initialEvents: Event[];
@@ -19,6 +19,9 @@ export function HistoryList({ initialEvents }: HistoryListProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [filter, setFilter] = useState<EventType | "all">("all");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTime, setEditTime] = useState("");
+  const [editNotes, setEditNotes] = useState("");
 
   const filteredEvents =
     filter === "all"
@@ -32,6 +35,24 @@ export function HistoryList({ initialEvents }: HistoryListProps) {
     const existing = grouped.get(dateKey) || [];
     existing.push(event);
     grouped.set(dateKey, existing);
+  }
+
+  function handleEdit(event: Event) {
+    setEditingId(event.id);
+    setEditTime(formatDateForInput(new Date(event.occurredAt)));
+    setEditNotes(event.notes || "");
+  }
+
+  function handleSave(id: string) {
+    startTransition(async () => {
+      await updateEventTime(id, new Date(editTime));
+      const original = initialEvents.find((e) => e.id === id);
+      if ((original?.notes || "") !== editNotes) {
+        await updateEventNotes(id, editNotes);
+      }
+      setEditingId(null);
+      router.refresh();
+    });
   }
 
   function handleDelete(id: string) {
@@ -90,6 +111,54 @@ export function HistoryList({ initialEvents }: HistoryListProps) {
               {dayEvents.map((event) => {
                 const config = EVENT_TYPE_CONFIG[event.type as EventType];
                 if (!config) return null;
+                const isEditing = editingId === event.id;
+
+                if (isEditing) {
+                  return (
+                    <div
+                      key={event.id}
+                      className="p-3 bg-amber-50 rounded-xl border border-amber-200 space-y-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${config.color}`}>
+                          {config.emoji}
+                        </div>
+                        <span className="text-sm font-medium text-stone-800">{config.label}</span>
+                      </div>
+                      <input
+                        type="datetime-local"
+                        value={editTime}
+                        onChange={(e) => setEditTime(e.target.value)}
+                        className="w-full p-2 rounded-lg border border-amber-200 bg-white text-sm
+                          focus:outline-none focus:ring-2 focus:ring-amber-300"
+                      />
+                      <input
+                        type="text"
+                        value={editNotes}
+                        onChange={(e) => setEditNotes(e.target.value)}
+                        placeholder="Notes (optional)"
+                        className="w-full p-2 rounded-lg border border-amber-200 bg-white text-sm
+                          focus:outline-none focus:ring-2 focus:ring-amber-300 placeholder:text-stone-300"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="flex-1 py-2 rounded-lg border border-stone-200 text-stone-500 text-xs font-medium"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => handleSave(event.id)}
+                          disabled={isPending}
+                          className="flex-1 py-2 rounded-lg bg-amber-500 text-white text-xs font-semibold disabled:opacity-50"
+                        >
+                          {isPending ? "Saving..." : "Save"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
                   <div
                     key={event.id}
@@ -113,6 +182,14 @@ export function HistoryList({ initialEvents }: HistoryListProps) {
                     <div className="text-xs text-stone-400 text-right shrink-0">
                       {formatTime(event.occurredAt)}
                     </div>
+                    <button
+                      onClick={() => handleEdit(event)}
+                      disabled={isPending}
+                      className="text-stone-300 hover:text-amber-500 transition-colors p-1 disabled:opacity-50"
+                      aria-label="Edit event"
+                    >
+                      ✏️
+                    </button>
                     <button
                       onClick={() => handleDelete(event.id)}
                       disabled={isPending}

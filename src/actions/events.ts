@@ -42,6 +42,20 @@ export async function logEvent(
   return { id: docRef.id, ...event, occurredAt: occurredAt || now, createdAt: now };
 }
 
+export async function updateEventTime(id: string, occurredAt: Date) {
+  await verifySession();
+  await eventsCollection().doc(id).update({
+    occurredAt: Timestamp.fromDate(occurredAt),
+  });
+}
+
+export async function updateEventNotes(id: string, notes: string) {
+  await verifySession();
+  await eventsCollection().doc(id).update({
+    notes: notes || null,
+  });
+}
+
 export async function deleteEvent(id: string) {
   await verifySession();
   await eventsCollection().doc(id).delete();
