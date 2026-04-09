@@ -9,19 +9,11 @@ import {
 import { auth, googleProvider } from "@/lib/firebase-client";
 import { signIn } from "@/actions/auth";
 
-function isStandalone(): boolean {
-  if (typeof window === "undefined") return false;
-  return (
-    window.matchMedia("(display-mode: standalone)").matches ||
-    ("standalone" in window.navigator && (navigator as unknown as { standalone: boolean }).standalone)
-  );
-}
-
 export function LoginForm() {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  // Handle redirect result (for iOS PWA standalone mode)
+  // Handle redirect result (fallback for when popup fails in PWA)
   useEffect(() => {
     getRedirectResult(auth)
       .then(async (result) => {
@@ -46,23 +38,33 @@ export function LoginForm() {
   async function handleSignIn() {
     setError(null);
     try {
-      if (isStandalone()) {
-        // iOS PWA doesn't support popups, use redirect
-        await signInWithRedirect(auth, googleProvider);
-      } else {
-        const result = await signInWithPopup(auth, googleProvider);
-        const idToken = await result.user.getIdToken();
-        startTransition(async () => {
-          try {
-            await signIn(idToken);
-          } catch (e) {
-            setError(e instanceof Error ? e.message : "Sign in failed");
-          }
-        });
-      }
+      // Always try popup first - it works in most contexts including modern iOS PWAs.
+      // Only fall back to redirect if popup is explicitly blocked.
+      const result = await signInWithPopup(auth, googleProvider);
+      const idToken = await result.user.getIdToken();
+      startTransition(async () => {
+        try {
+          await signIn(idToken);
+        } catch (e) {
+          setError(e instanceof Error ? e.message : "Sign in failed");
+        }
+      });
     } catch (e: unknown) {
       const firebaseError = e as { code?: string; message?: string };
-      if (firebaseError.code !== "auth/popup-closed-by-user") {
+      if (
+        firebaseError.code === "auth/popup-blocked" ||
+        firebaseError.code === "auth/popup-closed-by-user" ||
+        firebaseError.code === "auth/cancelled-popup-request"
+      ) {
+        // Popup didn't work, try redirect as fallback
+        try {
+          await signInWithRedirect(auth, googleProvider);
+        } catch (redirectError) {
+          setError(
+            (redirectError as { message?: string }).message || "Sign in failed"
+          );
+        }
+      } else if (firebaseError.code !== "auth/popup-closed-by-user") {
         setError(firebaseError.message || "Sign in failed");
       }
     }
