@@ -37,42 +37,56 @@ export function BottomNav() {
       {/* More menu overlay */}
       {showMore && (
         <div
-          className="fixed inset-0 z-40"
+          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
           onClick={() => setShowMore(false)}
         >
           <div
             className="absolute bottom-20 left-0 right-0 mx-auto max-w-lg px-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-white rounded-2xl border border-stone-200 shadow-lg p-2">
-              {MORE_NAV.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setShowMore(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                      isActive
-                        ? "bg-amber-50 text-amber-700"
-                        : "text-stone-600 hover:bg-stone-50"
-                    }`}
-                  >
-                    <span className="text-lg">{item.icon}</span>
-                    <span className="text-sm font-medium">{item.label}</span>
-                  </Link>
-                );
-              })}
-              <div className="border-t border-stone-100 mt-1 pt-1">
+            <div
+              className="p-2 rounded-2xl"
+              style={{
+                background: "rgba(255,255,255,0.92)",
+                backdropFilter: "blur(20px)",
+                boxShadow: "0 8px 32px rgba(44,36,32,0.12), 0 2px 8px rgba(44,36,32,0.06)",
+              }}
+            >
+              <div className="grid grid-cols-3 gap-1">
+                {MORE_NAV.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setShowMore(false)}
+                      className={`flex flex-col items-center gap-1 px-2 py-3 rounded-xl transition-all ${
+                        isActive
+                          ? "bg-accent-light"
+                          : "hover:bg-[#f5ede3]"
+                      }`}
+                    >
+                      <span className="text-xl">{item.icon}</span>
+                      <span className={`text-[11px] font-semibold ${
+                        isActive ? "text-accent" : "text-[#8b7b6b]"
+                      }`}>
+                        {item.label}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+              <div className="border-t border-[#e8e0d6] mt-1.5 pt-1.5">
                 <button
                   onClick={() => {
                     setShowMore(false);
                     startTransition(() => signOut());
                   }}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 w-full transition-colors"
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
+                    text-red-400 hover:bg-red-50 w-full transition-colors"
                 >
-                  <span className="text-lg">👋</span>
-                  <span className="text-sm font-medium">Sign out</span>
+                  <span className="text-sm">👋</span>
+                  <span className="text-xs font-semibold">Sign out</span>
                 </button>
               </div>
             </div>
@@ -80,7 +94,14 @@ export function BottomNav() {
         </div>
       )}
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-amber-200 safe-bottom z-50">
+      <nav
+        className="fixed bottom-0 left-0 right-0 safe-bottom z-50"
+        style={{
+          background: "var(--nav-bg)",
+          backdropFilter: "blur(20px)",
+          borderTop: "1px solid var(--nav-border)",
+        }}
+      >
         <div className="max-w-lg mx-auto flex justify-around items-center h-16">
           {PRIMARY_NAV.map((item) => {
             const isActive = pathname === item.href;
@@ -88,27 +109,43 @@ export function BottomNav() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${
-                  isActive
-                    ? "text-amber-600 font-semibold"
-                    : "text-stone-400 hover:text-stone-600"
-                }`}
+                className="flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-all relative"
               >
-                <span className="text-xl">{item.icon}</span>
-                <span className="text-xs">{item.label}</span>
+                {isActive && (
+                  <span
+                    className="absolute -top-1 left-1/2 -translate-x-1/2 w-6 h-1 rounded-full"
+                    style={{ background: "var(--accent)" }}
+                  />
+                )}
+                <span className={`text-xl transition-transform ${isActive ? "scale-110" : ""}`}>
+                  {item.icon}
+                </span>
+                <span className={`text-[10px] font-bold tracking-wide ${
+                  isActive ? "text-accent" : "text-[#a89585]"
+                }`}>
+                  {item.label}
+                </span>
               </Link>
             );
           })}
           <button
             onClick={() => setShowMore(!showMore)}
-            className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${
-              isMoreActive || showMore
-                ? "text-amber-600 font-semibold"
-                : "text-stone-400 hover:text-stone-600"
-            }`}
+            className="flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-all relative"
           >
-            <span className="text-xl">•••</span>
-            <span className="text-xs">More</span>
+            {(isMoreActive || showMore) && (
+              <span
+                className="absolute -top-1 left-1/2 -translate-x-1/2 w-6 h-1 rounded-full"
+                style={{ background: "var(--accent)" }}
+              />
+            )}
+            <span className={`text-xl transition-transform ${isMoreActive || showMore ? "scale-110" : ""}`}>
+              •••
+            </span>
+            <span className={`text-[10px] font-bold tracking-wide ${
+              isMoreActive || showMore ? "text-accent" : "text-[#a89585]"
+            }`}>
+              More
+            </span>
           </button>
         </div>
       </nav>

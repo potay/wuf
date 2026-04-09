@@ -53,10 +53,11 @@ export function CrateTimer({ inCrate, since }: CrateTimerProps) {
 
   if (!inCrate) {
     return (
-      <div className="bg-green-50 border border-green-200 rounded-2xl p-4 text-center">
-        <div className="text-2xl mb-1">🐕</div>
-        <div className="text-sm text-green-700 font-medium">Toro is free!</div>
-        <div className="text-xs text-green-600 mt-1">Not in crate</div>
+      <div className="rounded-2xl p-5 text-center"
+        style={{ background: "linear-gradient(135deg, #ecfdf5, #d1fae5)", boxShadow: "var(--card-shadow)" }}>
+        <div className="text-3xl mb-1">🐕</div>
+        <div className="text-sm text-green-700 font-bold">Toro is free!</div>
+        <div className="text-xs text-green-600/70 mt-1">Not in crate</div>
       </div>
     );
   }
@@ -66,13 +67,15 @@ export function CrateTimer({ inCrate, since }: CrateTimerProps) {
 
   return (
     <div
-      className={`rounded-2xl p-4 text-center border ${
-        isLong
-          ? "bg-red-50 border-red-200"
+      className="rounded-2xl p-5 text-center"
+      style={{
+        background: isLong
+          ? "linear-gradient(135deg, #fef2f2, #fecaca)"
           : isWarning
-            ? "bg-amber-50 border-amber-200"
-            : "bg-purple-50 border-purple-200"
-      }`}
+            ? "linear-gradient(135deg, #fffbeb, #fde68a)"
+            : "linear-gradient(135deg, #faf5ff, #e9d5ff)",
+        boxShadow: "var(--card-shadow)",
+      }}
     >
       <div className="text-2xl mb-1">🏠</div>
       <div

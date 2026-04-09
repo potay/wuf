@@ -48,12 +48,18 @@ export default async function HomePage() {
       </NotificationProvider>
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div
+          className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
+          style={{ background: "linear-gradient(135deg, var(--accent), var(--accent-hover))", boxShadow: "0 4px 12px rgba(232,145,58,0.3)" }}
+        >
+          🐾
+        </div>
         <div>
-          <h1 className="text-2xl font-bold text-stone-800">
-            🐾 Wuf
+          <h1 className="text-2xl font-black tracking-tight" style={{ color: "var(--foreground)" }}>
+            Wuf
           </h1>
-          <p className="text-sm text-stone-500">Toro&apos;s daily tracker</p>
+          <p className="text-xs font-medium" style={{ color: "#a89585" }}>Toro&apos;s daily tracker</p>
         </div>
       </div>
 
@@ -65,7 +71,7 @@ export default async function HomePage() {
 
       {/* Time since */}
       <section>
-        <h2 className="text-sm font-semibold text-stone-600 mb-3 uppercase tracking-wide">
+        <h2 className="wuf-section-title mb-3">
           Time since last
         </h2>
         <TimeSince lastEvents={lastEvents} />
@@ -73,7 +79,7 @@ export default async function HomePage() {
 
       {/* Quick log */}
       <section>
-        <h2 className="text-sm font-semibold text-stone-600 mb-3 uppercase tracking-wide">
+        <h2 className="wuf-section-title mb-3">
           Quick log
         </h2>
         <QuickLogButtons />
@@ -81,7 +87,7 @@ export default async function HomePage() {
 
       {/* Today's stats */}
       <section>
-        <h2 className="text-sm font-semibold text-stone-600 mb-3 uppercase tracking-wide">
+        <h2 className="wuf-section-title mb-3">
           Today&apos;s stats
         </h2>
         <TodayStats stats={todayStats} />
@@ -91,7 +97,7 @@ export default async function HomePage() {
       {upcomingReminders.length > 0 && (
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-stone-600 uppercase tracking-wide">
+            <h2 className="wuf-section-title">
               Upcoming
             </h2>
             <Link
@@ -105,7 +111,7 @@ export default async function HomePage() {
             {upcomingReminders.map((reminder) => (
               <div
                 key={reminder.id}
-                className="flex items-center gap-3 p-3 bg-white rounded-xl border border-stone-100"
+                className="flex items-center gap-3 p-3 wuf-card"
               >
                 <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-sm">
                   🔔
@@ -127,7 +133,7 @@ export default async function HomePage() {
       {/* Recent activity */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-stone-600 uppercase tracking-wide">
+          <h2 className="wuf-section-title">
             Today&apos;s activity
           </h2>
           <Link

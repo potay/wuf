@@ -15,7 +15,7 @@ export function TodayStats({ stats }: TodayStatsProps) {
         return (
           <div
             key={type}
-            className="flex items-center gap-2 bg-white rounded-xl border border-stone-100 p-3"
+            className="flex items-center gap-2 wuf-card p-3"
           >
             <span className="text-lg">{config.emoji}</span>
             <div>

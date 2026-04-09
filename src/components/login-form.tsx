@@ -75,8 +75,7 @@ export function LoginForm() {
       <button
         onClick={handleSignIn}
         disabled={isPending}
-        className="w-full py-4 rounded-2xl bg-amber-500 text-white font-semibold text-base
-          hover:bg-amber-600 active:scale-[0.98] transition-all disabled:opacity-50
+        className="wuf-btn w-full py-4 text-base disabled:opacity-50
           flex items-center justify-center gap-3"
       >
         {isPending ? (
@@ -107,7 +106,7 @@ export function LoginForm() {
       </button>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
+        <div className="bg-red-50/80 border border-red-200/60 rounded-xl p-3 text-sm text-red-600">
           {error}
         </div>
       )}

@@ -42,10 +42,10 @@ export function QuickLogButtons() {
           <button
             key={offset.minutes}
             onClick={() => setOffsetMinutes(offset.minutes)}
-            className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+            className={`wuf-chip ${
               offsetMinutes === offset.minutes
-                ? "bg-amber-500 text-white"
-                : "bg-stone-100 text-stone-500 hover:bg-stone-200"
+                ? "wuf-chip-active"
+                : "wuf-chip-inactive"
             }`}
           >
             {offset.minutes === 0 ? offset.label : `${offset.label} ago`}
@@ -68,8 +68,7 @@ export function QuickLogButtons() {
             <button
               key={type}
               onClick={() => handleLog(type)}
-              className={`flex flex-col items-center gap-1 p-4 rounded-2xl border border-stone-200
-                active:scale-95 transition-all hover:shadow-md
+              className={`flex flex-col items-center gap-1 p-4 wuf-card
                 ${config.color}`}
             >
               <span className="text-2xl">{config.emoji}</span>

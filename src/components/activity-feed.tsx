@@ -24,7 +24,7 @@ export function ActivityFeed({ events, showDate = false }: ActivityFeedProps) {
         return (
           <div
             key={event.id}
-            className="flex items-center gap-3 p-3 bg-white rounded-xl border border-stone-100"
+            className="flex items-center gap-3 p-3 wuf-card"
           >
             <div
               className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${config.color}`}
