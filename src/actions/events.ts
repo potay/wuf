@@ -3,6 +3,7 @@
 import { db } from "@/db";
 import { EVENT_TYPES, type EventType, type Event } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
+import { verifySession } from "@/lib/session";
 
 const eventsCollection = () => db.collection("events");
 
@@ -24,6 +25,7 @@ export async function logEvent(
   metadata?: string,
   occurredAt?: Date
 ) {
+  await verifySession();
   if (!EVENT_TYPES.includes(type)) {
     throw new Error(`Invalid event type: ${type}`);
   }
@@ -41,6 +43,7 @@ export async function logEvent(
 }
 
 export async function deleteEvent(id: string) {
+  await verifySession();
   await eventsCollection().doc(id).delete();
 }
 

@@ -2,6 +2,7 @@
 
 import { db } from "@/db";
 import { type PuppyProfile } from "@/db/schema";
+import { verifySession } from "@/lib/session";
 
 const PROFILE_DOC = "toro";
 const collection = () => db.collection("profile");
@@ -32,6 +33,7 @@ export async function getProfile(): Promise<PuppyProfile> {
 }
 
 export async function updateProfile(data: Partial<PuppyProfile>) {
+  await verifySession();
   const updates: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {
     updates[key] = value === "" ? null : value;

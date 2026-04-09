@@ -3,6 +3,7 @@
 import { db } from "@/db";
 import { type Trick, type TrickStatus } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
+import { verifySession } from "@/lib/session";
 
 const collection = () => db.collection("tricks");
 
@@ -19,6 +20,7 @@ function docToTrick(doc: FirebaseFirestore.DocumentSnapshot): Trick {
 }
 
 export async function addTrick(data: { name: string; notes?: string }) {
+  await verifySession();
   const docRef = collection().doc();
   const now = new Date();
   const trick = {
@@ -33,6 +35,7 @@ export async function addTrick(data: { name: string; notes?: string }) {
 }
 
 export async function updateTrickStatus(id: string, status: TrickStatus) {
+  await verifySession();
   const updates: Record<string, unknown> = { status };
   if (status === "mastered") {
     updates.masteredAt = Timestamp.fromDate(new Date());
@@ -43,6 +46,7 @@ export async function updateTrickStatus(id: string, status: TrickStatus) {
 }
 
 export async function deleteTrick(id: string) {
+  await verifySession();
   await collection().doc(id).delete();
 }
 

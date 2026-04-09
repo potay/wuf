@@ -4,6 +4,12 @@ steps:
       - "build"
       - "--build-arg"
       - "NEXT_PUBLIC_VAPID_PUBLIC_KEY=${_VAPID_PUBLIC_KEY}"
+      - "--build-arg"
+      - "NEXT_PUBLIC_FIREBASE_API_KEY=${_FIREBASE_API_KEY}"
+      - "--build-arg"
+      - "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${_FIREBASE_AUTH_DOMAIN}"
+      - "--build-arg"
+      - "NEXT_PUBLIC_FIREBASE_PROJECT_ID=$PROJECT_ID"
       - "-t"
       - "us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/wuf:$COMMIT_SHA"
       - "."
@@ -24,7 +30,7 @@ steps:
       - "--region"
       - "us-central1"
       - "--set-env-vars"
-      - "FIREBASE_PROJECT_ID=$PROJECT_ID,VAPID_PRIVATE_KEY=${_VAPID_PRIVATE_KEY},NEXT_PUBLIC_VAPID_PUBLIC_KEY=${_VAPID_PUBLIC_KEY},VAPID_SUBJECT=mailto:me@paulchun.com"
+      - "FIREBASE_PROJECT_ID=$PROJECT_ID,VAPID_PRIVATE_KEY=${_VAPID_PRIVATE_KEY},NEXT_PUBLIC_VAPID_PUBLIC_KEY=${_VAPID_PUBLIC_KEY},VAPID_SUBJECT=mailto:me@paulchun.com,ALLOWED_EMAIL=${_ALLOWED_EMAIL}"
       - "--allow-unauthenticated"
       - "--port"
       - "8080"
@@ -38,6 +44,9 @@ steps:
 substitutions:
   _VAPID_PUBLIC_KEY: "BBmQ7aCizBLttegsoqoiaeiIjz_2lx7I5nKoC6QBYYJhEyPBA__e3TumEFsL1yXHAVcs27-L-ZlB2NMlO2_Jp_4"
   _VAPID_PRIVATE_KEY: "DMJKPiEd0QhYZCgB69S91ps586Oj7Bdr5e4un6B0-ME"
+  _FIREBASE_API_KEY: "AIzaSyC2u4nkuyMhLQpySHkKtOSdiAD6Hgy6HS8"
+  _FIREBASE_AUTH_DOMAIN: "fattytoro.firebaseapp.com"
+  _ALLOWED_EMAIL: "me@paulchun.com"
 
 options:
   logging: CLOUD_LOGGING_ONLY

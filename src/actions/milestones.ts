@@ -3,6 +3,7 @@
 import { db } from "@/db";
 import { type Milestone } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
+import { verifySession } from "@/lib/session";
 
 const collection = () => db.collection("milestones");
 
@@ -24,6 +25,7 @@ export async function createMilestone(data: {
   photoUrl?: string;
   occurredAt?: Date;
 }) {
+  await verifySession();
   const now = new Date();
   const docRef = collection().doc();
   const milestone = {
@@ -38,6 +40,7 @@ export async function createMilestone(data: {
 }
 
 export async function deleteMilestone(id: string) {
+  await verifySession();
   await collection().doc(id).delete();
 }
 

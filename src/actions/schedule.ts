@@ -2,6 +2,7 @@
 
 import { db } from "@/db";
 import { type ScheduleItem } from "@/db/schema";
+import { verifySession } from "@/lib/session";
 
 const collection = () => db.collection("schedule");
 
@@ -66,6 +67,7 @@ export async function addScheduleItem(data: {
   activity: string;
   notes?: string;
 }) {
+  await verifySession();
   const docRef = collection().doc();
   await docRef.set({
     time: data.time,
@@ -77,6 +79,7 @@ export async function addScheduleItem(data: {
 }
 
 export async function updateScheduleItem(id: string, data: Partial<ScheduleItem>) {
+  await verifySession();
   const updates: Record<string, unknown> = {};
   if (data.time !== undefined) updates.time = data.time;
   if (data.activity !== undefined) updates.activity = data.activity;
@@ -86,5 +89,6 @@ export async function updateScheduleItem(id: string, data: Partial<ScheduleItem>
 }
 
 export async function deleteScheduleItem(id: string) {
+  await verifySession();
   await collection().doc(id).delete();
 }

@@ -3,6 +3,7 @@
 import { db } from "@/db";
 import { type Medication } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
+import { verifySession } from "@/lib/session";
 
 const collection = () => db.collection("medications");
 
@@ -29,6 +30,7 @@ export async function addMedication(data: {
   endDate?: Date;
   notes?: string;
 }) {
+  await verifySession();
   const docRef = collection().doc();
   const now = new Date();
   const medication = {
@@ -46,10 +48,12 @@ export async function addMedication(data: {
 }
 
 export async function toggleMedicationActive(id: string, active: boolean) {
+  await verifySession();
   await collection().doc(id).update({ active });
 }
 
 export async function deleteMedication(id: string) {
+  await verifySession();
   await collection().doc(id).delete();
 }
 

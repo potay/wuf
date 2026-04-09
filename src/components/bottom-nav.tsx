@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { signOut } from "@/actions/auth";
 
 const PRIMARY_NAV = [
   { href: "/", label: "Home", icon: "🏠" },
@@ -27,6 +28,7 @@ const ALL_MORE_HREFS = MORE_NAV.map((i) => i.href);
 export function BottomNav() {
   const pathname = usePathname();
   const [showMore, setShowMore] = useState(false);
+  const [, startTransition] = useTransition();
   const isMoreActive = ALL_MORE_HREFS.includes(pathname as typeof ALL_MORE_HREFS[number]);
 
   return (
@@ -60,6 +62,18 @@ export function BottomNav() {
                   </Link>
                 );
               })}
+              <div className="border-t border-stone-100 mt-1 pt-1">
+                <button
+                  onClick={() => {
+                    setShowMore(false);
+                    startTransition(() => signOut());
+                  }}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 w-full transition-colors"
+                >
+                  <span className="text-lg">👋</span>
+                  <span className="text-sm font-medium">Sign out</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

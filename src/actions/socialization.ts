@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { type SocializationItem } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
 import { SOCIALIZATION_CHECKLIST } from "@/lib/socialization-checklist";
+import { verifySession } from "@/lib/session";
 
 const collection = () => db.collection("socializations");
 
@@ -44,11 +45,13 @@ export async function getAllSocializationItems(): Promise<SocializationItem[]> {
 }
 
 export async function toggleSocializationItem(id: string, completed: boolean) {
+  await verifySession();
   await collection().doc(id).update({
     completedAt: completed ? Timestamp.fromDate(new Date()) : null,
   });
 }
 
 export async function updateSocializationNotes(id: string, notes: string) {
+  await verifySession();
   await collection().doc(id).update({ notes: notes || null });
 }

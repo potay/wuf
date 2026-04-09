@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { type Reminder } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
 import type { ReminderCategory } from "@/lib/reminder-categories";
+import { verifySession } from "@/lib/session";
 
 const remindersCollection = () => db.collection("reminders");
 
@@ -28,6 +29,7 @@ export async function createReminder(data: {
   dueAt: Date;
   repeatInterval?: string;
 }) {
+  await verifySession();
   const now = new Date();
   const docRef = remindersCollection().doc();
   const reminder = {
@@ -44,18 +46,21 @@ export async function createReminder(data: {
 }
 
 export async function completeReminder(id: string) {
+  await verifySession();
   await remindersCollection().doc(id).update({
     completedAt: Timestamp.fromDate(new Date()),
   });
 }
 
 export async function uncompleteReminder(id: string) {
+  await verifySession();
   await remindersCollection().doc(id).update({
     completedAt: null,
   });
 }
 
 export async function deleteReminder(id: string) {
+  await verifySession();
   await remindersCollection().doc(id).delete();
 }
 
