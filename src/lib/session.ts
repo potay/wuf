@@ -10,7 +10,7 @@ import "@/db";
 const SESSION_COOKIE_NAME = "__session";
 const SESSION_EXPIRY_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
 const ALLOWED_EMAILS = (process.env.ALLOWED_EMAILS || process.env.ALLOWED_EMAIL || "")
-  .split(",")
+  .split("|")
   .map((e) => e.trim().toLowerCase())
   .filter(Boolean);
 
