@@ -17,6 +17,7 @@ const MORE_NAV = [
   { href: "/weight", label: "Weight", icon: "⚖️" },
   { href: "/tricks", label: "Tricks", icon: "🎓" },
   { href: "/reminders", label: "Reminders", icon: "🔔" },
+  { href: "/records", label: "Records", icon: "🗂️" },
   { href: "/medications", label: "Medications", icon: "💊" },
   { href: "/socialization", label: "Socialization", icon: "🌍" },
   { href: "/milestones", label: "Milestones", icon: "📸" },

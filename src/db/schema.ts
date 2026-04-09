@@ -168,6 +168,43 @@ export interface Medication {
   createdAt: Date;
 }
 
+export type MedicalRecordCategory =
+  | "vet_visit"
+  | "vaccination"
+  | "lab_results"
+  | "prescription"
+  | "imaging"
+  | "other";
+
+export const MEDICAL_RECORD_CATEGORIES: Record<
+  MedicalRecordCategory,
+  { label: string; emoji: string }
+> = {
+  vet_visit: { label: "Vet Visit", emoji: "🏥" },
+  vaccination: { label: "Vaccination", emoji: "💉" },
+  lab_results: { label: "Lab Results", emoji: "🔬" },
+  prescription: { label: "Prescription", emoji: "💊" },
+  imaging: { label: "X-Ray / Imaging", emoji: "📷" },
+  other: { label: "Other", emoji: "📋" },
+};
+
+export interface MedicalRecord {
+  id: string;
+  title: string;
+  category: MedicalRecordCategory;
+  date: Date;
+  notes: string | null;
+  files: MedicalRecordFile[];
+  createdAt: Date;
+}
+
+export interface MedicalRecordFile {
+  name: string;
+  url: string;
+  contentType: string;
+  size: number;
+}
+
 export interface FeedingDetails {
   food: string;
   amount: string;
