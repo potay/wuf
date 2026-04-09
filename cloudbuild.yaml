@@ -46,7 +46,7 @@ substitutions:
   _VAPID_PRIVATE_KEY: "DMJKPiEd0QhYZCgB69S91ps586Oj7Bdr5e4un6B0-ME"
   _FIREBASE_API_KEY: "AIzaSyC2u4nkuyMhLQpySHkKtOSdiAD6Hgy6HS8"
   _FIREBASE_AUTH_DOMAIN: "fattytoro.firebaseapp.com"
-  _ALLOWED_EMAIL: "me@paulchun.com"
+  _ALLOWED_EMAIL: "me@paulchun.com,nanshan7596@gmail.com"
   _ANTHROPIC_API_KEY: ""
 
 options:

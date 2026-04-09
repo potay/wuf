@@ -9,14 +9,17 @@ import "@/db";
 
 const SESSION_COOKIE_NAME = "__session";
 const SESSION_EXPIRY_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
-const ALLOWED_EMAIL = process.env.ALLOWED_EMAIL || "";
+const ALLOWED_EMAILS = (process.env.ALLOWED_EMAILS || process.env.ALLOWED_EMAIL || "")
+  .split(",")
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean);
 
 export async function createSession(idToken: string) {
   const auth = getAuth();
 
   // Verify the ID token and check the email
   const decoded = await auth.verifyIdToken(idToken);
-  if (ALLOWED_EMAIL && decoded.email !== ALLOWED_EMAIL) {
+  if (ALLOWED_EMAILS.length > 0 && !ALLOWED_EMAILS.includes(decoded.email?.toLowerCase() || "")) {
     throw new Error("Unauthorized: this account is not allowed.");
   }
 
@@ -46,7 +49,7 @@ export const verifySession = cache(async () => {
     const auth = getAuth();
     const decoded = await auth.verifySessionCookie(sessionCookie, true);
 
-    if (ALLOWED_EMAIL && decoded.email !== ALLOWED_EMAIL) {
+    if (ALLOWED_EMAILS.length > 0 && !ALLOWED_EMAILS.includes(decoded.email?.toLowerCase() || "")) {
       redirect("/login");
     }
 
