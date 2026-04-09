@@ -12,6 +12,10 @@ export const metadata: Metadata = {
   title: "Wuf - Toro's Tracker",
   description: "Puppy management app for Toro",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.png",
+    apple: "/apple-touch-icon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
