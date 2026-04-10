@@ -111,24 +111,27 @@ export function MilestonesView({ milestones }: MilestonesViewProps) {
                 ))}
               </div>
             )}
-            <label
-              className={`flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-dashed
-                cursor-pointer transition-colors text-[13px] font-semibold ${
+            <button
+              type="button"
+              onClick={() => document.getElementById("milestone-file-input")?.click()}
+              disabled={uploading}
+              className={`w-full flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-dashed
+                transition-colors text-[13px] font-semibold ${
                   uploading
                     ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]"
                     : "border-[var(--border)] text-[var(--fg-3)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
                 }`}
             >
-              <input
-                type="file"
-                accept="image/*,video/*"
-                multiple
-                onChange={handleFileUpload}
-                className="hidden"
-                disabled={uploading}
-              />
               {uploading ? "Uploading..." : "📷 Add photos or videos"}
-            </label>
+            </button>
+            <input
+              id="milestone-file-input"
+              type="file"
+              accept=".jpg,.jpeg,.png,.heic,.heif,.webp,.mp4,.mov,.webm"
+              multiple
+              onChange={handleFileUpload}
+              className="hidden"
+            />
           </div>
 
           <div className="flex gap-2">
