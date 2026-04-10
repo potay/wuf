@@ -7,9 +7,9 @@ import { redirect } from "next/navigation";
 export async function signIn(idToken: string) {
   const decoded = await createSession(idToken);
 
-  // Check if user has completed onboarding
+  // Check if user has an active puppy
   const userDoc = await db.collection("users").doc(decoded.uid).get();
-  if (userDoc.exists && userDoc.data()?.onboardingComplete) {
+  if (userDoc.exists && userDoc.data()?.activePuppyId) {
     redirect("/");
   } else {
     redirect("/onboarding");

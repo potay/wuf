@@ -15,6 +15,24 @@ export default async function ProfilePage() {
           Emergency info, vet contacts, and details
         </p>
       </div>
+
+      {/* Invite code */}
+      {user.inviteCode && (
+        <div className="wuf-card p-4">
+          <div className="text-[12px] font-bold text-[var(--fg-3)] uppercase tracking-wide mb-2">
+            Invite code
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[24px] font-bold tracking-[0.2em] text-[var(--fg)]">
+              {user.inviteCode}
+            </span>
+            <span className="text-[12px] text-[var(--fg-3)]">
+              Share to add family members
+            </span>
+          </div>
+        </div>
+      )}
+
       <ProfileForm profile={profile} />
     </div>
   );

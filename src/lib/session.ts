@@ -18,7 +18,6 @@ export async function createSession(idToken: string) {
   const auth = getAuth();
   const decoded = await auth.verifyIdToken(idToken);
 
-  // If ALLOWED_EMAILS is configured, enforce it. If empty, allow all.
   if (ALLOWED_EMAILS.length > 0 && !ALLOWED_EMAILS.includes(decoded.email?.toLowerCase() || "")) {
     throw new Error("Unauthorized: this account is not allowed.");
   }
@@ -61,33 +60,40 @@ export const verifySession = cache(async () => {
   }
 });
 
-/** Get the current user's profile and puppy info. Redirects to /onboarding if not set up. */
-export const getCurrentUser = cache(async () => {
+/** Get the active puppy ID for the current user. Redirects to /onboarding if not set. */
+const getActivePuppyId = cache(async (): Promise<string> => {
   const session = await verifySession();
   const userDoc = await db.collection("users").doc(session.uid).get();
 
-  if (!userDoc.exists || !userDoc.data()?.onboardingComplete) {
+  if (!userDoc.exists || !userDoc.data()?.activePuppyId) {
     redirect("/onboarding");
   }
 
-  const profileDoc = await db
-    .collection("users").doc(session.uid)
-    .collection("profile").doc("main").get();
+  return userDoc.data()!.activePuppyId as string;
+});
 
-  const profile = (profileDoc.data() || {}) as PuppyProfile;
+/** Get the current user + their active puppy's profile. */
+export const getCurrentUser = cache(async () => {
+  const session = await verifySession();
+  const puppyId = await getActivePuppyId();
+
+  const puppyDoc = await db.collection("puppies").doc(puppyId).get();
+  const puppyData = puppyDoc.data() || {};
 
   return {
     uid: session.uid,
     email: session.email || "",
-    puppyName: profile.name || "Puppy",
-    profile,
+    puppyId,
+    puppyName: (puppyData.name as string) || "Puppy",
+    inviteCode: (puppyData.inviteCode as string) || "",
+    profile: puppyData as PuppyProfile,
   };
 });
 
-/** Get a reference to a user-scoped subcollection. */
+/** Get a reference to the active puppy's subcollection. All data lives under the puppy. */
 export async function getUserCollection(collectionName: string) {
-  const session = await verifySession();
-  return db.collection("users").doc(session.uid).collection(collectionName);
+  const puppyId = await getActivePuppyId();
+  return db.collection("puppies").doc(puppyId).collection(collectionName);
 }
 
 export async function deleteSession() {

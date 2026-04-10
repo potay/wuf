@@ -119,8 +119,22 @@ export interface Milestone {
 export interface UserDoc {
   email: string;
   displayName: string;
+  activePuppyId: string | null;
   createdAt: Date;
-  onboardingComplete: boolean;
+}
+
+export interface PuppyMember {
+  uid: string;
+  role: "owner" | "member";
+  joinedAt: Date;
+}
+
+export interface PuppyDoc {
+  name: string;
+  inviteCode: string;
+  members: PuppyMember[];
+  createdBy: string;
+  createdAt: Date;
 }
 
 export interface PuppyProfile {
