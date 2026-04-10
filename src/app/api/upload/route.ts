@@ -24,16 +24,20 @@ export async function POST(request: NextRequest) {
     "image/heic",
     "image/heif",
     "image/webp",
+    "video/mp4",
+    "video/quicktime",
+    "video/webm",
   ];
 
   if (!allowedTypes.includes(file.type)) {
     return NextResponse.json(
-      { error: "File type not allowed. Use PDF, JPEG, PNG, or HEIC." },
+      { error: "File type not allowed. Use PDF, JPEG, PNG, HEIC, MP4, or MOV." },
       { status: 400 }
     );
   }
 
-  const maxSize = 20 * 1024 * 1024; // 20MB
+  const isVideo = file.type.startsWith("video/");
+  const maxSize = isVideo ? 100 * 1024 * 1024 : 20 * 1024 * 1024; // 100MB video, 20MB other
   if (file.size > maxSize) {
     return NextResponse.json(
       { error: "File too large. Maximum 20MB." },

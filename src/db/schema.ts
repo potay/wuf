@@ -100,11 +100,18 @@ export interface ScheduleItem {
   enabled: boolean;
 }
 
+export interface MilestoneMedia {
+  url: string;
+  contentType: string;
+  name: string;
+}
+
 export interface Milestone {
   id: string;
   title: string;
   notes: string | null;
   photoUrl: string | null;
+  media: MilestoneMedia[];
   occurredAt: Date;
   createdAt: Date;
 }

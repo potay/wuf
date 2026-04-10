@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { type Milestone } from "@/db/schema";
+import { type Milestone, type MilestoneMedia } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
 import { verifySession } from "@/lib/session";
 
@@ -14,6 +14,7 @@ function docToMilestone(doc: FirebaseFirestore.DocumentSnapshot): Milestone {
     title: data.title,
     notes: data.notes || null,
     photoUrl: data.photoUrl || null,
+    media: data.media || [],
     occurredAt: (data.occurredAt as Timestamp).toDate(),
     createdAt: (data.createdAt as Timestamp).toDate(),
   };
@@ -22,7 +23,7 @@ function docToMilestone(doc: FirebaseFirestore.DocumentSnapshot): Milestone {
 export async function createMilestone(data: {
   title: string;
   notes?: string;
-  photoUrl?: string;
+  media?: MilestoneMedia[];
   occurredAt?: Date;
 }) {
   await verifySession();
@@ -31,7 +32,8 @@ export async function createMilestone(data: {
   const milestone = {
     title: data.title,
     notes: data.notes || null,
-    photoUrl: data.photoUrl || null,
+    photoUrl: data.media?.[0]?.url || null,
+    media: data.media || [],
     occurredAt: Timestamp.fromDate(data.occurredAt || now),
     createdAt: Timestamp.fromDate(now),
   };
