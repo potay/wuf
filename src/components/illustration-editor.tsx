@@ -37,7 +37,11 @@ export function IllustrationEditor({ currentUrl, breed, puppyName }: Illustratio
       const res = await fetch("/api/generate-illustration", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ breed, customization: desc || undefined }),
+        body: JSON.stringify({
+          breed,
+          customization: desc || undefined,
+          currentImageUrl: url || undefined, // Pass current image for edits
+        }),
       });
 
       if (res.ok) {
@@ -51,6 +55,23 @@ export function IllustrationEditor({ currentUrl, breed, puppyName }: Illustratio
       // silently fail
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function handleRevert(targetUrl: string) {
+    // Use PATCH to set illustration to an existing URL
+    try {
+      const res = await fetch("/api/generate-illustration", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: targetUrl }),
+      });
+      if (res.ok) {
+        setUrl(targetUrl);
+        router.refresh();
+      }
+    } catch {
+      // silently fail
     }
   }
 
@@ -82,75 +103,76 @@ export function IllustrationEditor({ currentUrl, breed, puppyName }: Illustratio
             onClick={() => handleGenerate()}
             className="wuf-btn px-6 py-2.5 text-[13px] mt-4"
           >
-            {url ? "Regenerate" : "Generate illustration"}
+            {url ? "Regenerate from scratch" : "Generate illustration"}
           </button>
         )}
       </div>
 
-      {/* Quick customizations */}
-      <section>
-        <h2 className="text-[15px] font-bold text-[var(--fg)] mb-3">Quick adjustments</h2>
-        <div className="flex flex-wrap gap-2">
-          {QUICK_CUSTOMIZATIONS.map((desc) => (
-            <button
-              key={desc}
-              onClick={() => handleGenerate(desc)}
-              disabled={generating}
-              className="wuf-chip wuf-chip-inactive text-[12px] disabled:opacity-40"
-            >
-              {desc}
-            </button>
-          ))}
-        </div>
-      </section>
+      {/* Quick customizations - these edit the current image */}
+      {url && (
+        <section>
+          <h2 className="text-[15px] font-bold text-[var(--fg)] mb-3">Quick adjustments</h2>
+          <p className="text-[12px] text-[var(--fg-3)] mb-2">
+            These modify your current illustration
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {QUICK_CUSTOMIZATIONS.map((desc) => (
+              <button
+                key={desc}
+                onClick={() => handleGenerate(desc)}
+                disabled={generating}
+                className="wuf-chip wuf-chip-inactive text-[12px] disabled:opacity-40"
+              >
+                {desc}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Custom description */}
-      <section>
-        <h2 className="text-[15px] font-bold text-[var(--fg)] mb-3">Describe changes</h2>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={customization}
-            onChange={(e) => setCustomization(e.target.value)}
-            placeholder={`e.g., "Make ${puppyName}'s ears pointier"`}
-            disabled={generating}
-            className="flex-1"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && customization.trim()) {
-                handleGenerate();
-              }
-            }}
-          />
-          <button
-            onClick={() => handleGenerate()}
-            disabled={generating || !customization.trim()}
-            className="wuf-btn px-4 py-2 text-[13px] shrink-0"
-          >
-            Go
-          </button>
-        </div>
-      </section>
+      {url && (
+        <section>
+          <h2 className="text-[15px] font-bold text-[var(--fg)] mb-3">Describe a change</h2>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={customization}
+              onChange={(e) => setCustomization(e.target.value)}
+              placeholder={`e.g., "Make ${puppyName}'s ears pointier"`}
+              disabled={generating}
+              className="flex-1"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && customization.trim()) {
+                  handleGenerate();
+                }
+              }}
+            />
+            <button
+              onClick={() => handleGenerate()}
+              disabled={generating || !customization.trim()}
+              className="wuf-btn px-4 py-2 text-[13px] shrink-0"
+            >
+              Go
+            </button>
+          </div>
+        </section>
+      )}
 
-      {/* History */}
+      {/* History - click to revert */}
       {history.length > 1 && (
         <section>
-          <h2 className="text-[15px] font-bold text-[var(--fg)] mb-3">Previous versions</h2>
+          <h2 className="text-[15px] font-bold text-[var(--fg)] mb-2">Previous versions</h2>
+          <p className="text-[12px] text-[var(--fg-3)] mb-3">
+            Tap to revert to a previous version
+          </p>
           <div className="grid grid-cols-4 gap-2">
             {history.map((histUrl, i) => (
               <button
                 key={i}
-                onClick={async () => {
-                  setUrl(histUrl);
-                  // Update puppy doc to use this version
-                  await fetch("/api/generate-illustration", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ breed, useExistingUrl: histUrl }),
-                  }).catch(() => {});
-                  router.refresh();
-                }}
-                className={`aspect-square rounded-xl overflow-hidden border-2 ${
-                  url === histUrl ? "border-[var(--accent)]" : "border-transparent"
+                onClick={() => handleRevert(histUrl)}
+                className={`aspect-square rounded-xl overflow-hidden border-2 transition-all ${
+                  url === histUrl ? "border-[var(--accent)] shadow-md" : "border-transparent opacity-60 hover:opacity-100"
                 }`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}

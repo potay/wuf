@@ -19,16 +19,29 @@ function reducer(state: State, action: Action): State {
   }
 }
 
+// Module-level flag to prevent duplicate generation across re-mounts
+let generationInProgress = false;
+
 export function PuppyAvatar({ illustrationUrl, breed, puppyName, className = "w-24 h-24" }: PuppyAvatarProps) {
   const [state, dispatch] = useReducer(reducer, {
     url: illustrationUrl,
-    loading: !illustrationUrl,
+    loading: false,
   });
   const attempted = useRef(false);
 
   useEffect(() => {
-    if (state.url || attempted.current) return;
+    // Don't auto-generate - only show what exists or fallback
+    // Generation should only happen from the /illustration page
+    if (illustrationUrl && !state.url) {
+      dispatch({ type: "loaded", url: illustrationUrl });
+    }
+  }, [illustrationUrl, state.url]);
+
+  // Only auto-generate once, ever, and only if no illustration exists
+  useEffect(() => {
+    if (state.url || attempted.current || generationInProgress) return;
     attempted.current = true;
+    generationInProgress = true;
 
     fetch("/api/generate-illustration", {
       method: "POST",
@@ -40,16 +53,9 @@ export function PuppyAvatar({ illustrationUrl, breed, puppyName, className = "w-
         if (data?.url) dispatch({ type: "loaded", url: data.url });
         else dispatch({ type: "done" });
       })
-      .catch(() => dispatch({ type: "done" }));
-  }, [state.url, breed]);
-
-  if (state.loading) {
-    return (
-      <div className={`${className} rounded-2xl flex items-center justify-center bg-white/10 animate-pulse`}>
-        <span className="text-2xl">🎨</span>
-      </div>
-    );
-  }
+      .catch(() => dispatch({ type: "done" }))
+      .finally(() => { generationInProgress = false; });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (state.url) {
     return (
@@ -58,6 +64,7 @@ export function PuppyAvatar({ illustrationUrl, breed, puppyName, className = "w-
     );
   }
 
+  // Fallback - paw emoji (no loading spinner to avoid confusion)
   return (
     <div className={`${className} rounded-2xl flex items-center justify-center bg-white/10`}>
       <span className="text-3xl">🐾</span>
