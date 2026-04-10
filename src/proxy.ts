@@ -4,6 +4,11 @@ import type { NextRequest } from "next/server";
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Skip auth in local development
+  if (process.env.NODE_ENV === "development") {
+    return NextResponse.next();
+  }
+
   // Allow login page, static assets, service worker, and push check (Cloud Scheduler)
   if (pathname === "/login" || pathname === "/api/push/check") {
     return NextResponse.next();

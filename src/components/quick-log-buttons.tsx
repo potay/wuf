@@ -11,7 +11,6 @@ const TIME_OFFSETS = [
   { label: "10m", minutes: 10 },
   { label: "15m", minutes: 15 },
   { label: "30m", minutes: 30 },
-  { label: "1h", minutes: 60 },
 ] as const;
 
 export function QuickLogButtons() {
@@ -27,7 +26,7 @@ export function QuickLogButtons() {
         ? new Date(Date.now() - offset * 60_000)
         : undefined;
       await logEvent(type, undefined, undefined, occurredAt);
-      setLastLogged(`${EVENT_TYPE_CONFIG[type].emoji} ${EVENT_TYPE_CONFIG[type].label}${offsetMinutes > 0 ? ` (${offsetMinutes}m ago)` : ""}`);
+      setLastLogged(`${EVENT_TYPE_CONFIG[type].label}`);
       setOffsetMinutes(0);
       setTimeout(() => setLastLogged(null), 2000);
       router.refresh();
@@ -35,47 +34,48 @@ export function QuickLogButtons() {
   }
 
   return (
-    <div className="space-y-3">
-      {/* Time offset selector */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1">
-        {TIME_OFFSETS.map((offset) => (
-          <button
-            key={offset.minutes}
-            onClick={() => setOffsetMinutes(offset.minutes)}
-            className={`wuf-chip ${
-              offsetMinutes === offset.minutes
-                ? "wuf-chip-active"
-                : "wuf-chip-inactive"
-            }`}
-          >
-            {offset.minutes === 0 ? offset.label : `${offset.label} ago`}
-          </button>
-        ))}
-      </div>
-
-      {/* Logged confirmation */}
+    <div className="space-y-4">
       {lastLogged && (
-        <div className="text-center text-sm text-green-600 font-medium">
+        <div className="text-center text-[14px] font-bold" style={{ color: "var(--ok)" }}>
           Logged {lastLogged} ✓
         </div>
       )}
 
-      {/* Event buttons */}
-      <div className="grid grid-cols-3 gap-3">
+      {/* Pastel colored grid - each type gets its own color */}
+      <div className="grid grid-cols-4 gap-3">
         {QUICK_LOG_TYPES.map((type) => {
           const config = EVENT_TYPE_CONFIG[type];
           return (
             <button
               key={type}
               onClick={() => handleLog(type)}
-              className={`flex flex-col items-center gap-1 p-4 wuf-card
-                ${config.color}`}
+              className="flex flex-col items-center gap-2 active:scale-90 transition-transform"
             >
-              <span className="text-2xl">{config.emoji}</span>
-              <span className="text-xs font-medium">{config.label}</span>
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
+                style={{ background: config.bg, boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}
+              >
+                {config.emoji}
+              </div>
+              <span className="text-[11px] font-bold text-[var(--fg-2)]">{config.label}</span>
             </button>
           );
         })}
+      </div>
+
+      {/* Time offset */}
+      <div className="flex items-center gap-2 overflow-x-auto">
+        {TIME_OFFSETS.map((offset) => (
+          <button
+            key={offset.minutes}
+            onClick={() => setOffsetMinutes(offset.minutes)}
+            className={`wuf-chip ${
+              offsetMinutes === offset.minutes ? "wuf-chip-active" : "wuf-chip-inactive"
+            }`}
+          >
+            {offset.minutes === 0 ? offset.label : `${offset.label} ago`}
+          </button>
+        ))}
       </div>
     </div>
   );

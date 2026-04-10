@@ -74,21 +74,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   return (
     <>
-      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
-        <span className="text-2xl">🔔</span>
-        <div className="flex-1">
-          <div className="text-sm font-medium text-amber-800">
-            Enable notifications?
-          </div>
-          <div className="text-xs text-amber-600">
-            Get push alerts for crate time, schedule reminders, and more
-          </div>
+      <div className="wuf-card px-4 py-3 flex items-center gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="text-[13px] font-bold text-[var(--fg)]">Enable notifications</div>
+          <div className="text-[11px] text-[var(--fg-3)]">Crate reminders and schedule alerts</div>
         </div>
-        <button
-          onClick={handleEnable}
-          className="px-4 py-2 rounded-xl bg-amber-500 text-white text-sm font-semibold
-            hover:bg-amber-600 transition-colors shrink-0"
-        >
+        <button onClick={handleEnable} className="wuf-btn px-4 py-2 text-[12px] shrink-0">
           Enable
         </button>
       </div>

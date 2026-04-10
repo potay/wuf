@@ -8,23 +8,24 @@ const TRACKED_STATS: EventType[] = ["pee", "poop", "meal", "water", "walk", "tre
 
 export function TodayStats({ stats }: TodayStatsProps) {
   return (
-    <div className="grid grid-cols-3 gap-2">
-      {TRACKED_STATS.map((type) => {
-        const config = EVENT_TYPE_CONFIG[type];
-        const count = stats[type] || 0;
-        return (
-          <div
-            key={type}
-            className="flex items-center gap-2 wuf-card p-3"
-          >
-            <span className="text-lg">{config.emoji}</span>
-            <div>
-              <div className="text-lg font-bold text-stone-800">{count}</div>
-              <div className="text-xs text-stone-400">{config.label}</div>
+    <div className="wuf-card p-4">
+      <div className="grid grid-cols-6 gap-2">
+        {TRACKED_STATS.map((type) => {
+          const config = EVENT_TYPE_CONFIG[type];
+          const count = stats[type] || 0;
+          return (
+            <div key={type} className="text-center">
+              <div
+                className="w-10 h-10 mx-auto rounded-xl flex items-center justify-center text-base mb-1"
+                style={{ background: config.bg }}
+              >
+                {config.emoji}
+              </div>
+              <div className="text-[15px] font-extrabold text-[var(--fg)]">{count}</div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }

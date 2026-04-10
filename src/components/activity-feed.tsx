@@ -9,42 +9,41 @@ interface ActivityFeedProps {
 export function ActivityFeed({ events, showDate = false }: ActivityFeedProps) {
   if (events.length === 0) {
     return (
-      <div className="text-center py-8 text-stone-400">
+      <div className="wuf-card p-8 text-center text-[var(--fg-3)]">
         <div className="text-3xl mb-2">🐾</div>
-        <p className="text-sm">No activities logged yet</p>
+        <p className="text-[14px] font-medium">No activities yet today</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
-      {events.map((event) => {
+    <div className="wuf-card overflow-hidden">
+      {events.map((event, i) => {
         const config = EVENT_TYPE_CONFIG[event.type as EventType];
         if (!config) return null;
         return (
           <div
             key={event.id}
-            className="flex items-center gap-3 p-3 wuf-card"
+            className={`flex items-center gap-3 px-5 py-3.5 ${
+              i < events.length - 1 ? "border-b border-[var(--border)]" : ""
+            }`}
           >
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${config.color}`}
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0"
+              style={{ background: config.bg }}
             >
               {config.emoji}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium text-stone-800">
-                {config.label}
-              </div>
+              <div className="text-[14px] font-bold text-[var(--fg)]">{config.label}</div>
               {event.notes && (
-                <div className="text-xs text-stone-500 truncate">
-                  {event.notes}
-                </div>
+                <div className="text-[12px] text-[var(--fg-3)] truncate">{event.notes}</div>
               )}
             </div>
-            <div className="text-xs text-stone-400 text-right shrink-0">
-              <div><LocalTime date={event.occurredAt} format="time" /></div>
+            <div className="text-[12px] font-semibold text-[var(--fg-3)] shrink-0">
+              <LocalTime date={event.occurredAt} format="time" />
               {showDate && (
-                <div className="text-stone-300">
+                <div className="text-[10px]">
                   <LocalTime date={event.occurredAt} format="ago" />
                 </div>
               )}

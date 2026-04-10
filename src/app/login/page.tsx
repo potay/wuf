@@ -1,34 +1,33 @@
+import Image from "next/image";
 import { LoginForm } from "@/components/login-form";
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center px-6"
-      style={{ background: "linear-gradient(160deg, #faf6f1 0%, #f0e6d8 50%, #e8ddd0 100%)" }}
-    >
-      <div className="w-full max-w-sm text-center space-y-10">
-        <div className="space-y-4">
-          <div
-            className="w-20 h-20 mx-auto rounded-3xl flex items-center justify-center text-4xl"
-            style={{
-              background: "linear-gradient(135deg, #e8913a, #d17e2e)",
-              boxShadow: "0 8px 24px rgba(232,145,58,0.35)",
-            }}
-          >
-            🐾
+    <div className="min-h-screen flex flex-col" style={{ background: "var(--bg)" }}>
+      {/* Illustration area - light background so the PNG blends */}
+      <div className="flex-1 flex flex-col items-center justify-end px-8 pt-20 pb-6">
+        <Image
+          src="/illustrations/toro-waving.png"
+          alt="Toro waving"
+          width={480}
+          height={480}
+          className="w-64 h-64 object-contain"
+          priority
+        />
+      </div>
+
+      {/* Dark card with branding + login */}
+      <div
+        className="rounded-t-[40px] px-8 pt-10 pb-12"
+        style={{ background: "var(--hero)" }}
+      >
+        <div className="max-w-xs mx-auto space-y-8">
+          <div className="text-center">
+            <h1 className="text-[2.5rem] text-white">Wuf</h1>
+            <p className="text-[14px] text-white/50 mt-1">Toro&apos;s puppy tracker</p>
           </div>
-          <div>
-            <h1
-              className="text-4xl font-black tracking-tight"
-              style={{ color: "#2c2420" }}
-            >
-              Wuf
-            </h1>
-            <p className="text-sm mt-1" style={{ color: "#a89585" }}>
-              Toro&apos;s puppy tracker
-            </p>
-          </div>
+          <LoginForm />
         </div>
-        <LoginForm />
       </div>
     </div>
   );

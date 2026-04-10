@@ -91,19 +91,28 @@ function formatMinutes(min: number): string {
 
 function HourChart({ hours, color }: { hours: number[]; color: string }) {
   const max = Math.max(...hours, 1);
+  const BAR_HEIGHT = 56;
   return (
-    <div className="flex items-end gap-0.5 h-16">
-      {hours.map((count, hour) => (
-        <div key={hour} className="flex-1 flex flex-col items-center gap-0.5">
-          <div
-            className={`w-full rounded-sm ${color}`}
-            style={{ height: `${(count / max) * 100}%`, minHeight: count > 0 ? 2 : 0 }}
-          />
-          {hour % 6 === 0 && (
-            <span className="text-[8px] text-stone-400">{hour}</span>
-          )}
-        </div>
-      ))}
+    <div>
+      <div className="flex items-end" style={{ height: BAR_HEIGHT }}>
+        {hours.map((count, hour) => {
+          const h = count > 0 ? Math.max(Math.round((count / max) * BAR_HEIGHT), 4) : 0;
+          return (
+            <div key={hour} className="flex-1 flex justify-center">
+              <div className={`w-1.5 rounded-full ${color}`} style={{ height: h }} />
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex mt-1">
+        {hours.map((_, hour) => (
+          <div key={hour} className="flex-1 text-center">
+            {hour % 6 === 0 && (
+              <span className="text-[9px] text-[var(--fg-3)]">{hour}</span>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
