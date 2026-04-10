@@ -18,21 +18,42 @@ export function MilestonesView({ milestones }: MilestonesViewProps) {
   const [notes, setNotes] = useState("");
   const [media, setMedia] = useState<MilestoneMedia[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ done: 0, total: 0 });
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const fileList = e.target.files;
-    if (!fileList) return;
+    if (!fileList || fileList.length === 0) return;
 
+    const files = Array.from(fileList);
     setUploading(true);
-    for (const file of Array.from(fileList)) {
+    setUploadProgress({ done: 0, total: files.length });
+
+    // Upload up to 3 files in parallel
+    const CONCURRENCY = 3;
+    let done = 0;
+
+    async function uploadOne(file: File) {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      if (res.ok) {
-        const data = await res.json();
-        setMedia((prev) => [...prev, { url: data.url, contentType: data.contentType, name: data.name }]);
+      try {
+        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        if (res.ok) {
+          const data = await res.json();
+          setMedia((prev) => [...prev, { url: data.url, contentType: data.contentType, name: data.name }]);
+        }
+      } catch {
+        // skip failed uploads silently
       }
+      done++;
+      setUploadProgress({ done, total: files.length });
     }
+
+    // Process in batches of CONCURRENCY
+    for (let i = 0; i < files.length; i += CONCURRENCY) {
+      const batch = files.slice(i, i + CONCURRENCY);
+      await Promise.all(batch.map(uploadOne));
+    }
+
     setUploading(false);
     e.target.value = "";
   }
@@ -122,7 +143,9 @@ export function MilestonesView({ milestones }: MilestonesViewProps) {
                     : "border-[var(--border)] text-[var(--fg-3)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
                 }`}
             >
-              {uploading ? "Uploading..." : "📷 Add photos or videos"}
+              {uploading
+                ? `Uploading ${uploadProgress.done}/${uploadProgress.total}...`
+                : "📷 Add photos or videos"}
             </button>
             <input
               id="milestone-file-input"
