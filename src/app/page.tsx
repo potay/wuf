@@ -11,6 +11,7 @@ import { NotificationProvider } from "@/components/notification-provider";
 import { ScheduleNotifier } from "@/components/schedule-notifier";
 import { TimezoneSetter } from "@/components/timezone-setter";
 import { LocalTime } from "@/components/local-time";
+import { PuppyAvatar } from "@/components/puppy-avatar";
 import { type EventType } from "@/db/schema";
 import { getUserTimezone, getDayBoundsInTimezone } from "@/lib/timezone";
 import Link from "next/link";
@@ -55,11 +56,11 @@ export default async function HomePage() {
       >
         <div className="max-w-lg mx-auto">
           <div className="flex items-end gap-4 mb-5">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/illustrations/toro-happy.png"
-              alt={user.puppyName}
-              className="w-24 h-24 object-contain -mb-1"
+            <PuppyAvatar
+              illustrationUrl={user.profile.illustrationUrl ?? null}
+              breed={user.profile.breed || ""}
+              puppyName={user.puppyName}
+              className="w-24 h-24 -mb-1"
             />
             <div className="flex-1 pb-2">
               <p className="text-[12px] opacity-50 font-medium">Good day!</p>

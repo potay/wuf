@@ -21,6 +21,7 @@ const MORE_NAV = [
   { href: "/medications", label: "Meds" },
   { href: "/socialization", label: "Social" },
   { href: "/milestones", label: "Milestones" },
+  { href: "/illustration", label: "Illustration" },
   { href: "/profile", label: "Profile" },
 ] as const;
 
