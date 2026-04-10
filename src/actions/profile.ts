@@ -1,18 +1,16 @@
 "use server";
 
-import { db } from "@/db";
 import { type PuppyProfile } from "@/db/schema";
-import { verifySession } from "@/lib/session";
-
-const PROFILE_DOC = "toro";
-const collection = () => db.collection("profile");
+import { verifySession, getUserCollection } from "@/lib/session";
 
 const DEFAULT_PROFILE: PuppyProfile = {
-  name: "Toro",
+  name: "",
   breed: "",
   birthday: null,
   sex: null,
   color: null,
+  photoUrl: null,
+  illustrationUrl: null,
   microchipId: null,
   vetName: null,
   vetPhone: null,
@@ -24,9 +22,10 @@ const DEFAULT_PROFILE: PuppyProfile = {
 };
 
 export async function getProfile(): Promise<PuppyProfile> {
-  const doc = await collection().doc(PROFILE_DOC).get();
+  const col = await getUserCollection("profile");
+  const doc = await col.doc("main").get();
   if (!doc.exists) {
-    await collection().doc(PROFILE_DOC).set(DEFAULT_PROFILE);
+    await col.doc("main").set(DEFAULT_PROFILE);
     return DEFAULT_PROFILE;
   }
   return doc.data() as PuppyProfile;
@@ -34,9 +33,10 @@ export async function getProfile(): Promise<PuppyProfile> {
 
 export async function updateProfile(data: Partial<PuppyProfile>) {
   await verifySession();
+  const col = await getUserCollection("profile");
   const updates: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {
     updates[key] = value === "" ? null : value;
   }
-  await collection().doc(PROFILE_DOC).update(updates);
+  await col.doc("main").update(updates);
 }

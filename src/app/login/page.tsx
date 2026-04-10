@@ -8,7 +8,7 @@ export default function LoginPage() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/illustrations/toro-waving.png"
-          alt="Toro waving"
+          alt="Welcome"
           className="w-52 h-52 object-contain"
         />
       </div>
@@ -21,7 +21,7 @@ export default function LoginPage() {
         <div className="max-w-xs mx-auto space-y-8">
           <div className="text-center">
             <h1 className="text-[2.5rem] text-white">Wuf</h1>
-            <p className="text-[14px] text-white/50 mt-1">Toro&apos;s puppy tracker</p>
+            <p className="text-[14px] text-white/50 mt-1">Your puppy tracker</p>
           </div>
           <LoginForm />
         </div>

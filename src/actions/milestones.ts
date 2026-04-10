@@ -1,11 +1,8 @@
 "use server";
 
-import { db } from "@/db";
 import { type Milestone, type MilestoneMedia } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
-import { verifySession } from "@/lib/session";
-
-const collection = () => db.collection("milestones");
+import { verifySession, getUserCollection } from "@/lib/session";
 
 function docToMilestone(doc: FirebaseFirestore.DocumentSnapshot): Milestone {
   const data = doc.data()!;
@@ -27,8 +24,9 @@ export async function createMilestone(data: {
   occurredAt?: Date;
 }) {
   await verifySession();
+  const col = await getUserCollection("milestones");
   const now = new Date();
-  const docRef = collection().doc();
+  const docRef = col.doc();
   const milestone = {
     title: data.title,
     notes: data.notes || null,
@@ -43,11 +41,13 @@ export async function createMilestone(data: {
 
 export async function deleteMilestone(id: string) {
   await verifySession();
-  await collection().doc(id).delete();
+  const col = await getUserCollection("milestones");
+  await col.doc(id).delete();
 }
 
 export async function getAllMilestones(): Promise<Milestone[]> {
-  const snapshot = await collection()
+  const col = await getUserCollection("milestones");
+  const snapshot = await col
     .orderBy("occurredAt", "desc")
     .get();
   return snapshot.docs.map(docToMilestone);

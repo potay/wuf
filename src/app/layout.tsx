@@ -11,7 +11,7 @@ const jakarta = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: "Wuf",
-  description: "Puppy management app for Toro",
+  description: "Puppy management app",
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon.png",

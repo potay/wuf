@@ -1,12 +1,9 @@
 "use server";
 
-import { db } from "@/db";
 import { type Reminder } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
 import type { ReminderCategory } from "@/lib/reminder-categories";
-import { verifySession } from "@/lib/session";
-
-const remindersCollection = () => db.collection("reminders");
+import { verifySession, getUserCollection } from "@/lib/session";
 
 function docToReminder(doc: FirebaseFirestore.DocumentSnapshot): Reminder {
   const data = doc.data()!;
@@ -30,8 +27,9 @@ export async function createReminder(data: {
   repeatInterval?: string;
 }) {
   await verifySession();
+  const col = await getUserCollection("reminders");
   const now = new Date();
-  const docRef = remindersCollection().doc();
+  const docRef = col.doc();
   const reminder = {
     title: data.title,
     notes: data.notes || null,
@@ -47,25 +45,29 @@ export async function createReminder(data: {
 
 export async function completeReminder(id: string) {
   await verifySession();
-  await remindersCollection().doc(id).update({
+  const col = await getUserCollection("reminders");
+  await col.doc(id).update({
     completedAt: Timestamp.fromDate(new Date()),
   });
 }
 
 export async function uncompleteReminder(id: string) {
   await verifySession();
-  await remindersCollection().doc(id).update({
+  const col = await getUserCollection("reminders");
+  await col.doc(id).update({
     completedAt: null,
   });
 }
 
 export async function deleteReminder(id: string) {
   await verifySession();
-  await remindersCollection().doc(id).delete();
+  const col = await getUserCollection("reminders");
+  await col.doc(id).delete();
 }
 
 export async function getUpcomingReminders(limit: number = 20): Promise<Reminder[]> {
-  const snapshot = await remindersCollection()
+  const col = await getUserCollection("reminders");
+  const snapshot = await col
     .where("completedAt", "==", null)
     .orderBy("dueAt", "asc")
     .limit(limit)
@@ -75,8 +77,9 @@ export async function getUpcomingReminders(limit: number = 20): Promise<Reminder
 }
 
 export async function getOverdueReminders(): Promise<Reminder[]> {
+  const col = await getUserCollection("reminders");
   const now = new Date();
-  const snapshot = await remindersCollection()
+  const snapshot = await col
     .where("completedAt", "==", null)
     .where("dueAt", "<=", Timestamp.fromDate(now))
     .orderBy("dueAt", "asc")
@@ -86,7 +89,8 @@ export async function getOverdueReminders(): Promise<Reminder[]> {
 }
 
 export async function getAllReminders(): Promise<Reminder[]> {
-  const snapshot = await remindersCollection()
+  const col = await getUserCollection("reminders");
+  const snapshot = await col
     .orderBy("createdAt", "desc")
     .get();
 
@@ -94,7 +98,8 @@ export async function getAllReminders(): Promise<Reminder[]> {
 }
 
 export async function getRemindersByCategory(category: ReminderCategory): Promise<Reminder[]> {
-  const snapshot = await remindersCollection()
+  const col = await getUserCollection("reminders");
+  const snapshot = await col
     .where("category", "==", category)
     .orderBy("dueAt", "asc")
     .get();

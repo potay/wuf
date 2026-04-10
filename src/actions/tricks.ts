@@ -1,11 +1,8 @@
 "use server";
 
-import { db } from "@/db";
 import { type Trick, type TrickStatus } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
-import { verifySession } from "@/lib/session";
-
-const collection = () => db.collection("tricks");
+import { verifySession, getUserCollection } from "@/lib/session";
 
 function docToTrick(doc: FirebaseFirestore.DocumentSnapshot): Trick {
   const data = doc.data()!;
@@ -21,7 +18,8 @@ function docToTrick(doc: FirebaseFirestore.DocumentSnapshot): Trick {
 
 export async function addTrick(data: { name: string; notes?: string }) {
   await verifySession();
-  const docRef = collection().doc();
+  const col = await getUserCollection("tricks");
+  const docRef = col.doc();
   const now = new Date();
   const trick = {
     name: data.name,
@@ -36,21 +34,24 @@ export async function addTrick(data: { name: string; notes?: string }) {
 
 export async function updateTrickStatus(id: string, status: TrickStatus) {
   await verifySession();
+  const col = await getUserCollection("tricks");
   const updates: Record<string, unknown> = { status };
   if (status === "mastered") {
     updates.masteredAt = Timestamp.fromDate(new Date());
   } else {
     updates.masteredAt = null;
   }
-  await collection().doc(id).update(updates);
+  await col.doc(id).update(updates);
 }
 
 export async function deleteTrick(id: string) {
   await verifySession();
-  await collection().doc(id).delete();
+  const col = await getUserCollection("tricks");
+  await col.doc(id).delete();
 }
 
 export async function getAllTricks(): Promise<Trick[]> {
-  const snapshot = await collection().orderBy("startedAt", "desc").get();
+  const col = await getUserCollection("tricks");
+  const snapshot = await col.orderBy("startedAt", "desc").get();
   return snapshot.docs.map(docToTrick);
 }

@@ -1,6 +1,7 @@
 import { getCrateStatus, getEventsForDay, getTodayStats, getLastEventOfType } from "@/actions/events";
 import { getUpcomingReminders } from "@/actions/reminders";
 import { getSchedule } from "@/actions/schedule";
+import { getCurrentUser } from "@/lib/session";
 import { CrateTimer } from "@/components/crate-timer";
 import { QuickLogButtons } from "@/components/quick-log-buttons";
 import { TodayStats } from "@/components/today-stats";
@@ -22,8 +23,9 @@ export default async function HomePage() {
   const tz = await getUserTimezone();
   const { start, end } = getDayBoundsInTimezone(new Date(), tz);
 
-  const [crateStatus, todayEvents, todayStats, upcomingReminders, schedule, ...lastEventResults] =
+  const [user, crateStatus, todayEvents, todayStats, upcomingReminders, schedule, ...lastEventResults] =
     await Promise.all([
+      getCurrentUser(),
       getCrateStatus(),
       getEventsForDay(start, end),
       getTodayStats(start, end),
@@ -46,7 +48,7 @@ export default async function HomePage() {
         <ScheduleNotifier items={schedule} />
       </NotificationProvider>
 
-      {/* Hero header with Toro */}
+      {/* Hero header */}
       <div
         className="px-5 pt-10 pb-6 rounded-b-[32px]"
         style={{ background: "var(--hero)", color: "var(--hero-fg)" }}
@@ -56,15 +58,15 @@ export default async function HomePage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/illustrations/toro-happy.png"
-              alt="Toro"
+              alt={user.puppyName}
               className="w-24 h-24 object-contain -mb-1"
             />
             <div className="flex-1 pb-2">
               <p className="text-[12px] opacity-50 font-medium">Good day!</p>
-              <h1 className="text-[22px] text-white leading-tight">Toro&apos;s<br/>Dashboard</h1>
+              <h1 className="text-[22px] text-white leading-tight">{user.puppyName}&apos;s<br/>Dashboard</h1>
             </div>
           </div>
-          <CrateTimer inCrate={crateStatus.inCrate} since={crateStatus.since} />
+          <CrateTimer inCrate={crateStatus.inCrate} since={crateStatus.since} puppyName={user.puppyName} />
         </div>
       </div>
 

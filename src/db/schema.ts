@@ -1,4 +1,4 @@
-// All event types that can be logged for Toro
+// All event types that can be logged for a puppy
 export const EVENT_TYPES = [
   "pee",
   "poop",
@@ -116,12 +116,21 @@ export interface Milestone {
   createdAt: Date;
 }
 
+export interface UserDoc {
+  email: string;
+  displayName: string;
+  createdAt: Date;
+  onboardingComplete: boolean;
+}
+
 export interface PuppyProfile {
   name: string;
   breed: string;
   birthday: string | null; // YYYY-MM-DD
   sex: string | null;
   color: string | null;
+  photoUrl: string | null;
+  illustrationUrl: string | null;
   microchipId: string | null;
   vetName: string | null;
   vetPhone: string | null;

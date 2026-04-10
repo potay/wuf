@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifySession } from "@/lib/session";
+import { getCurrentUser } from "@/lib/session";
 import Anthropic from "@anthropic-ai/sdk";
 
-const SYSTEM_PROMPT = `You are a veterinary record parser for a puppy named Toro (Aussiedoodle).
+function buildSystemPrompt(puppyName: string, breed: string): string {
+  const puppyDesc = breed ? `${puppyName} (${breed})` : puppyName;
+  return `You are a veterinary record parser for a puppy named ${puppyDesc}.
 Extract structured data from uploaded vet documents and insurance policies.
 
 Return a JSON object with these fields (omit any that aren't found):
@@ -69,9 +71,10 @@ Return a JSON object with these fields (omit any that aren't found):
 }
 
 Return ONLY valid JSON, no markdown formatting.`;
+}
 
 export async function POST(request: NextRequest) {
-  await verifySession();
+  const user = await getCurrentUser();
 
   const formData = await request.formData();
   const file = formData.get("file") as File | null;
@@ -115,7 +118,7 @@ export async function POST(request: NextRequest) {
     const response = await client.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 4096,
-      system: SYSTEM_PROMPT,
+      system: buildSystemPrompt(user.puppyName, user.profile.breed || ""),
       messages: [{ role: "user", content }],
     });
 

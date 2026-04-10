@@ -1,11 +1,8 @@
 "use server";
 
-import { db } from "@/db";
 import { type Medication } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
-import { verifySession } from "@/lib/session";
-
-const collection = () => db.collection("medications");
+import { verifySession, getUserCollection } from "@/lib/session";
 
 function docToMedication(doc: FirebaseFirestore.DocumentSnapshot): Medication {
   const data = doc.data()!;
@@ -31,7 +28,8 @@ export async function addMedication(data: {
   notes?: string;
 }) {
   await verifySession();
-  const docRef = collection().doc();
+  const col = await getUserCollection("medications");
+  const docRef = col.doc();
   const now = new Date();
   const medication = {
     name: data.name,
@@ -49,15 +47,18 @@ export async function addMedication(data: {
 
 export async function toggleMedicationActive(id: string, active: boolean) {
   await verifySession();
-  await collection().doc(id).update({ active });
+  const col = await getUserCollection("medications");
+  await col.doc(id).update({ active });
 }
 
 export async function deleteMedication(id: string) {
   await verifySession();
-  await collection().doc(id).delete();
+  const col = await getUserCollection("medications");
+  await col.doc(id).delete();
 }
 
 export async function getAllMedications(): Promise<Medication[]> {
-  const snapshot = await collection().orderBy("createdAt", "desc").get();
+  const col = await getUserCollection("medications");
+  const snapshot = await col.orderBy("createdAt", "desc").get();
   return snapshot.docs.map(docToMedication);
 }

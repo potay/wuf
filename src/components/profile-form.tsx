@@ -21,7 +21,7 @@ const SECTIONS: { title: string; emoji: string; fields: FieldConfig[] }[] = [
     title: "Basic info",
     emoji: "🐾",
     fields: [
-      { key: "name", label: "Name", placeholder: "Toro" },
+      { key: "name", label: "Name", placeholder: "e.g., Buddy" },
       { key: "breed", label: "Breed", placeholder: "e.g., Golden Retriever" },
       { key: "birthday", label: "Birthday", placeholder: "", type: "date" },
       { key: "sex", label: "Sex", placeholder: "e.g., Female" },

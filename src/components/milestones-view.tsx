@@ -190,7 +190,7 @@ export function MilestonesView({ milestones }: MilestonesViewProps) {
         <div className="wuf-card p-8 text-center">
           <div className="text-3xl mb-2">📸</div>
           <p className="text-[14px] font-medium text-[var(--fg-3)]">No milestones yet</p>
-          <p className="text-[12px] text-[var(--fg-3)] mt-1">Record Toro&apos;s firsts and special moments!</p>
+          <p className="text-[12px] text-[var(--fg-3)] mt-1">Record your pup&apos;s firsts and special moments!</p>
         </div>
       )}
 

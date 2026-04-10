@@ -1,7 +1,7 @@
 {
-  "name": "Wuf - Toro's Tracker",
+  "name": "Wuf",
   "short_name": "Wuf",
-  "description": "Puppy management app for Toro",
+  "description": "Puppy management app",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#fffbf5",

@@ -1,11 +1,8 @@
 "use server";
 
-import { db } from "@/db";
 import { type MedicalRecord, type MedicalRecordCategory, type MedicalRecordFile } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
-import { verifySession } from "@/lib/session";
-
-const collection = () => db.collection("medical_records");
+import { verifySession, getUserCollection } from "@/lib/session";
 
 function docToRecord(doc: FirebaseFirestore.DocumentSnapshot): MedicalRecord {
   const data = doc.data()!;
@@ -28,8 +25,9 @@ export async function createMedicalRecord(data: {
   files: MedicalRecordFile[];
 }) {
   await verifySession();
+  const col = await getUserCollection("medical_records");
   const now = new Date();
-  const docRef = collection().doc();
+  const docRef = col.doc();
   const record = {
     title: data.title,
     category: data.category,
@@ -44,10 +42,12 @@ export async function createMedicalRecord(data: {
 
 export async function deleteMedicalRecord(id: string) {
   await verifySession();
-  await collection().doc(id).delete();
+  const col = await getUserCollection("medical_records");
+  await col.doc(id).delete();
 }
 
 export async function getAllMedicalRecords(): Promise<MedicalRecord[]> {
-  const snapshot = await collection().orderBy("date", "desc").get();
+  const col = await getUserCollection("medical_records");
+  const snapshot = await col.orderBy("date", "desc").get();
   return snapshot.docs.map(docToRecord);
 }

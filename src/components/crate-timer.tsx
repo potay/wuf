@@ -7,12 +7,13 @@ import { sendNotification } from "@/components/notification-provider";
 interface CrateTimerProps {
   inCrate: boolean;
   since: Date | string | null;
+  puppyName?: string;
 }
 
 const ONE_HOUR = 60 * 60 * 1000;
 const TWO_HOURS = 2 * ONE_HOUR;
 
-export function CrateTimer({ inCrate, since }: CrateTimerProps) {
+export function CrateTimer({ inCrate, since, puppyName = "Puppy" }: CrateTimerProps) {
   const [elapsed, setElapsed] = useState(0);
   const sinceMs = since ? new Date(since).getTime() : null;
   const notifiedWarning = useRef(false);
@@ -30,16 +31,16 @@ export function CrateTimer({ inCrate, since }: CrateTimerProps) {
       setElapsed(now);
       if (now >= TWO_HOURS && !notifiedUrgent.current) {
         notifiedUrgent.current = true;
-        sendNotification("Toro needs out!", "She's been in the crate for over 2 hours.");
+        sendNotification(`${puppyName} needs out!`, `${puppyName} has been in the crate for over 2 hours.`);
       } else if (now >= ONE_HOUR && !notifiedWarning.current) {
         notifiedWarning.current = true;
-        sendNotification("Crate check-in", "Toro has been in the crate for 1 hour.");
+        sendNotification("Crate check-in", `${puppyName} has been in the crate for 1 hour.`);
       }
     };
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
-  }, [inCrate, sinceMs]);
+  }, [inCrate, sinceMs, puppyName]);
 
   const isLong = elapsed > TWO_HOURS;
   const isWarning = elapsed > ONE_HOUR;
@@ -58,10 +59,10 @@ export function CrateTimer({ inCrate, since }: CrateTimerProps) {
       <span className="text-2xl">{inCrate ? "🏠" : "🐕"}</span>
       <div className="flex-1">
         <div className="text-[14px] font-bold text-white">
-          {inCrate ? "In crate" : "Toro is free!"}
+          {inCrate ? "In crate" : "{puppyName} is free!"}
         </div>
         {inCrate && isLong && (
-          <div className="text-[11px] font-semibold text-red-300">Time to let her out!</div>
+          <div className="text-[11px] font-semibold text-red-300">Time to let them out!</div>
         )}
       </div>
       {inCrate && (
