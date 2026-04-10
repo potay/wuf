@@ -12,7 +12,6 @@ import { TimezoneSetter } from "@/components/timezone-setter";
 import { LocalTime } from "@/components/local-time";
 import { type EventType } from "@/db/schema";
 import { getUserTimezone, getDayBoundsInTimezone } from "@/lib/timezone";
-import Image from "next/image";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -54,11 +53,10 @@ export default async function HomePage() {
       >
         <div className="max-w-lg mx-auto">
           <div className="flex items-end gap-4 mb-5">
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/illustrations/toro-happy.png"
               alt="Toro"
-              width={200}
-              height={200}
               className="w-24 h-24 object-contain -mb-1"
             />
             <div className="flex-1 pb-2">

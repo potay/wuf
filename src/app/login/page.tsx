@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { LoginForm } from "@/components/login-form";
 
 export default function LoginPage() {
@@ -6,13 +5,11 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col" style={{ background: "var(--bg)" }}>
       {/* Illustration area - light background so the PNG blends */}
       <div className="flex-1 flex flex-col items-center justify-end px-8 pt-20 pb-6">
-        <Image
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src="/illustrations/toro-waving.png"
           alt="Toro waving"
-          width={480}
-          height={480}
-          className="w-64 h-64 object-contain"
-          priority
+          className="w-52 h-52 object-contain"
         />
       </div>
 

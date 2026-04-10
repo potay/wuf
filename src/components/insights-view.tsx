@@ -222,7 +222,7 @@ export function InsightsView({ events }: InsightsViewProps) {
             Meal to potty
           </h2>
           <div className="flex items-center gap-3">
-            <span className="text-2xl">🍖 → 💧</span>
+            <span className="text-2xl whitespace-nowrap shrink-0">🍖→💧</span>
             <div>
               <div className="text-2xl font-bold text-stone-800">
                 ~{formatMinutes(mealToPotty)}
