@@ -59,7 +59,7 @@ export function CrateTimer({ inCrate, since, puppyName = "Puppy" }: CrateTimerPr
       <span className="text-2xl">{inCrate ? "🏠" : "🐕"}</span>
       <div className="flex-1">
         <div className="text-[14px] font-bold text-white">
-          {inCrate ? "In crate" : "{puppyName} is free!"}
+          {inCrate ? "In crate" : `${puppyName} is free!`}
         </div>
         {inCrate && isLong && (
           <div className="text-[11px] font-semibold text-red-300">Time to let them out!</div>
