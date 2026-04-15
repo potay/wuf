@@ -483,6 +483,8 @@ export function WeightView({ events, birthday, breed, momWeightLbs, dadWeightLbs
                   Puppies grow rapidly at first, then slow down as they approach adult size.
                   <strong className="text-stone-700"> A</strong> is the asymptotic adult weight,
                   <strong className="text-stone-700"> k</strong> is how fast they get there.
+                  We solve for both A and k together via a 2D grid search (60 × 100 combinations),
+                  picking the pair that minimizes total error.
                 </p>
               </div>
 
@@ -502,8 +504,14 @@ export function WeightView({ events, birthday, breed, momWeightLbs, dadWeightLbs
                     when breed is unknown.
                   </li>
                 </ol>
+                <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px] bg-stone-50 rounded-lg px-3 py-2">
+                  <span className="text-stone-500">Both parents</span><span className="font-mono text-stone-700">strength = 1.5</span>
+                  <span className="text-stone-500">One parent</span><span className="font-mono text-stone-700">strength = 0.8</span>
+                  <span className="text-stone-500">Known breed</span><span className="font-mono text-stone-700">strength = 0.5</span>
+                  <span className="text-stone-500">Unknown breed</span><span className="font-mono text-stone-700">strength = 0.2</span>
+                </div>
                 <p className="text-[12px] text-stone-500 mt-1">
-                  Currently using: <span className="font-mono text-stone-700">{prior.source}</span>
+                  Currently using: <span className="font-mono text-stone-700">{prior.source}</span> (strength {prior.strength})
                 </p>
               </div>
 
@@ -516,8 +524,23 @@ export function WeightView({ events, birthday, breed, momWeightLbs, dadWeightLbs
                   error = data_error + λ × (A − prior_A)²
                 </div>
                 <p className="text-[12px] text-stone-500">
-                  λ is high with few data points (trust the prior) and decreases as you log
-                  more weights (trust your data).
+                  λ scales with prior strength and weakens with more data points:
+                </p>
+                <div className="bg-stone-50 rounded-lg px-3 py-2 my-1.5 font-mono text-[12px] text-stone-700">
+                  λ = strength × (10 / data_count)
+                </div>
+                <p className="text-[12px] text-stone-500">
+                  Example with both parents (strength 1.5):
+                </p>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px] bg-stone-50 rounded-lg px-3 py-2 mt-1">
+                  <span className="text-stone-500">2 data points</span><span className="font-mono text-stone-700">λ = 7.5 (heavy prior)</span>
+                  <span className="text-stone-500">5 data points</span><span className="font-mono text-stone-700">λ = 3.0</span>
+                  <span className="text-stone-500">10 data points</span><span className="font-mono text-stone-700">λ = 1.5</span>
+                  <span className="text-stone-500">20 data points</span><span className="font-mono text-stone-700">λ = 0.75 (data wins)</span>
+                </div>
+                <p className="text-[12px] text-stone-500 mt-1">
+                  Without this, 2-3 early measurements could fit a runaway curve. The prior keeps
+                  early estimates sane until you have enough data.
                 </p>
               </div>
 
@@ -541,6 +564,7 @@ export function WeightView({ events, birthday, breed, momWeightLbs, dadWeightLbs
                   <li>Accuracy improves significantly with more data points (aim for 5+)</li>
                   <li>The model assumes smooth growth — doesn&apos;t capture growth spurts</li>
                   <li>Large breeds keep filling out muscle mass past their height plateau</li>
+                  <li>The prior only constrains A (adult weight), not k (growth rate) — k is fit purely from data</li>
                   <li>The 95% &quot;full grown&quot; threshold is approximate</li>
                 </ul>
               </div>
