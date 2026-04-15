@@ -20,11 +20,32 @@ interface WeightViewProps {
   events: Event[];
 }
 
-function parseWeight(event: Event): number | null {
+type Unit = "lbs" | "kg";
+
+const LBS_PER_KG = 2.20462;
+
+function kgToLbs(kg: number): number {
+  return kg * LBS_PER_KG;
+}
+
+function lbsToKg(lbs: number): number {
+  return lbs / LBS_PER_KG;
+}
+
+/** Convert any stored weight to the target display unit. */
+function convertWeight(value: number, fromUnit: Unit, toUnit: Unit): number {
+  if (fromUnit === toUnit) return value;
+  if (fromUnit === "kg" && toUnit === "lbs") return kgToLbs(value);
+  return lbsToKg(value);
+}
+
+function parseWeightEntry(event: Event): { weight: number; unit: Unit } | null {
   if (!event.metadata) return null;
   try {
     const data = JSON.parse(event.metadata);
-    return typeof data.weight === "number" ? data.weight : null;
+    if (typeof data.weight !== "number") return null;
+    const unit: Unit = data.unit === "kg" ? "kg" : "lbs";
+    return { weight: data.weight, unit };
   } catch {
     return null;
   }
@@ -34,16 +55,22 @@ export function WeightView({ events }: WeightViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [weight, setWeight] = useState("");
-  const [unit] = useState("lbs");
+  const [inputUnit, setInputUnit] = useState<Unit>("lbs");
+  const [displayUnit, setDisplayUnit] = useState<Unit>("lbs");
   const [submitted, setSubmitted] = useState(false);
 
   const chartData = events
-    .map((e) => ({
-      date: new Date(e.occurredAt).getTime(),
-      weight: parseWeight(e),
-      label: format(new Date(e.occurredAt), "MMM d"),
-    }))
-    .filter((d) => d.weight !== null)
+    .map((e) => {
+      const parsed = parseWeightEntry(e);
+      if (!parsed) return null;
+      return {
+        date: new Date(e.occurredAt).getTime(),
+        weight: convertWeight(parsed.weight, parsed.unit, displayUnit),
+        originalWeight: parsed.weight,
+        originalUnit: parsed.unit,
+      };
+    })
+    .filter((d): d is NonNullable<typeof d> => d !== null)
     .sort((a, b) => a.date - b.date);
 
   function handleSubmit(e: React.FormEvent) {
@@ -52,13 +79,20 @@ export function WeightView({ events }: WeightViewProps) {
     if (isNaN(w) || w <= 0) return;
 
     startTransition(async () => {
-      await logEvent("weight", `${w} ${unit}`, JSON.stringify({ weight: w, unit }));
+      await logEvent(
+        "weight",
+        `${w} ${inputUnit}`,
+        JSON.stringify({ weight: w, unit: inputUnit })
+      );
       setWeight("");
       setSubmitted(true);
       setTimeout(() => setSubmitted(false), 2000);
       router.refresh();
     });
   }
+
+  const minDate = chartData[0]?.date;
+  const maxDate = chartData[chartData.length - 1]?.date;
 
   return (
     <div className="space-y-6">
@@ -72,12 +106,29 @@ export function WeightView({ events }: WeightViewProps) {
             value={weight}
             onChange={(e) => setWeight(e.target.value)}
             placeholder="Enter weight"
-            className="w-full p-3 pr-12 rounded-xl border border-stone-200 bg-white text-sm
+            className="w-full p-3 pr-16 rounded-xl border border-stone-200 bg-white text-sm
               focus:outline-none focus:ring-2 focus:ring-amber-300 placeholder:text-stone-300"
           />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-stone-400">
-            {unit}
-          </span>
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex bg-stone-100 rounded-lg p-0.5">
+            <button
+              type="button"
+              onClick={() => setInputUnit("lbs")}
+              className={`px-2 py-0.5 rounded-md text-[11px] font-semibold transition-colors ${
+                inputUnit === "lbs" ? "bg-white text-stone-800 shadow-sm" : "text-stone-400"
+              }`}
+            >
+              lbs
+            </button>
+            <button
+              type="button"
+              onClick={() => setInputUnit("kg")}
+              className={`px-2 py-0.5 rounded-md text-[11px] font-semibold transition-colors ${
+                inputUnit === "kg" ? "bg-white text-stone-800 shadow-sm" : "text-stone-400"
+              }`}
+            >
+              kg
+            </button>
+          </div>
         </div>
         <button
           type="submit"
@@ -90,6 +141,33 @@ export function WeightView({ events }: WeightViewProps) {
         </button>
       </form>
 
+      {/* Display unit toggle */}
+      {chartData.length > 0 && (
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-stone-500 uppercase tracking-wide">
+            Display in
+          </span>
+          <div className="flex bg-stone-100 rounded-lg p-0.5">
+            <button
+              onClick={() => setDisplayUnit("lbs")}
+              className={`px-3 py-1 rounded-md text-[12px] font-semibold transition-colors ${
+                displayUnit === "lbs" ? "bg-white text-stone-800 shadow-sm" : "text-stone-400"
+              }`}
+            >
+              lbs
+            </button>
+            <button
+              onClick={() => setDisplayUnit("kg")}
+              className={`px-3 py-1 rounded-md text-[12px] font-semibold transition-colors ${
+                displayUnit === "kg" ? "bg-white text-stone-800 shadow-sm" : "text-stone-400"
+              }`}
+            >
+              kg
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Weight chart */}
       {chartData.length >= 2 ? (
         <div className="bg-white rounded-xl border border-stone-100 p-4">
@@ -97,18 +175,23 @@ export function WeightView({ events }: WeightViewProps) {
             Growth chart
           </h2>
           <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={chartData}>
+            <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
               <XAxis
-                dataKey="label"
+                dataKey="date"
+                type="number"
+                scale="time"
+                domain={[minDate!, maxDate!]}
+                tickFormatter={(ts) => format(new Date(ts), "MMM d")}
                 tick={{ fontSize: 11, fill: "#a8a29e" }}
                 tickLine={false}
               />
               <YAxis
                 tick={{ fontSize: 11, fill: "#a8a29e" }}
                 tickLine={false}
-                unit=" lbs"
+                unit={` ${displayUnit}`}
                 domain={["dataMin - 1", "dataMax + 1"]}
+                tickFormatter={(v) => v.toFixed(1)}
               />
               <Tooltip
                 contentStyle={{
@@ -116,6 +199,8 @@ export function WeightView({ events }: WeightViewProps) {
                   border: "1px solid #e7e5e4",
                   fontSize: 12,
                 }}
+                labelFormatter={(ts) => format(new Date(ts as number), "MMM d, yyyy")}
+                formatter={(value) => [`${(value as number).toFixed(1)} ${displayUnit}`, "Weight"]}
               />
               <Line
                 type="monotone"
@@ -154,8 +239,13 @@ export function WeightView({ events }: WeightViewProps) {
                 <div className="flex items-center gap-2">
                   <span>⚖️</span>
                   <span className="text-sm font-bold text-stone-800">
-                    {entry.weight} {unit}
+                    {entry.weight.toFixed(1)} {displayUnit}
                   </span>
+                  {entry.originalUnit !== displayUnit && (
+                    <span className="text-[11px] text-stone-400">
+                      ({entry.originalWeight} {entry.originalUnit} logged)
+                    </span>
+                  )}
                 </div>
                 <span className="text-xs text-stone-400">{formatDate(new Date(entry.date))}</span>
               </div>
