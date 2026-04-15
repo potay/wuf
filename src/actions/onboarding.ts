@@ -65,6 +65,8 @@ export async function completeOnboarding(data: {
     photoUrl: null,
     illustrationUrl: null,
     microchipId: null,
+    momWeightLbs: null,
+    dadWeightLbs: null,
     vetName: null,
     vetPhone: null,
     emergencyVetName: null,

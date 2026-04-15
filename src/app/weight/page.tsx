@@ -19,6 +19,8 @@ export default async function WeightPage() {
         events={weightEvents}
         birthday={user.profile.birthday}
         breed={user.profile.breed}
+        momWeightLbs={user.profile.momWeightLbs}
+        dadWeightLbs={user.profile.dadWeightLbs}
       />
     </div>
   );

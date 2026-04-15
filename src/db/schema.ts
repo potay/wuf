@@ -146,6 +146,10 @@ export interface PuppyProfile {
   photoUrl: string | null;
   illustrationUrl: string | null;
   microchipId: string | null;
+  /** Mom's adult weight in lbs, for growth projection */
+  momWeightLbs: number | null;
+  /** Dad's adult weight in lbs, for growth projection */
+  dadWeightLbs: number | null;
   vetName: string | null;
   vetPhone: string | null;
   emergencyVetName: string | null;

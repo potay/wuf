@@ -30,6 +30,14 @@ const SECTIONS: { title: string; emoji: string; fields: FieldConfig[] }[] = [
     ],
   },
   {
+    title: "Parents (for growth projection)",
+    emoji: "👨‍👩‍👧",
+    fields: [
+      { key: "momWeightLbs", label: "Mom's adult weight (lbs)", placeholder: "e.g., 50", type: "number" },
+      { key: "dadWeightLbs", label: "Dad's adult weight (lbs)", placeholder: "e.g., 60", type: "number" },
+    ],
+  },
+  {
     title: "Vet",
     emoji: "🏥",
     fields: [
@@ -62,7 +70,8 @@ export function ProfileForm({ profile }: ProfileFormProps) {
     const initial: Record<string, string> = {};
     for (const section of SECTIONS) {
       for (const field of section.fields) {
-        initial[field.key] = (profile[field.key] as string) || "";
+        const raw = profile[field.key];
+        initial[field.key] = raw === null || raw === undefined ? "" : String(raw);
       }
     }
     initial.notes = profile.notes || "";

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { type Event } from "@/db/schema";
 import { logEvent } from "@/actions/events";
 import { formatDate } from "@/lib/utils";
+import { getBreedPrior } from "@/lib/breed-data";
 import {
   ResponsiveContainer,
   LineChart,
@@ -22,6 +23,8 @@ interface WeightViewProps {
   events: Event[];
   birthday: string | null;
   breed: string;
+  momWeightLbs: number | null;
+  dadWeightLbs: number | null;
 }
 
 type Unit = "lbs" | "kg";
@@ -50,41 +53,115 @@ function parseWeightEntry(event: Event): { weight: number; unit: Unit } | null {
   }
 }
 
+interface PriorInfo {
+  /** Expected adult weight in display unit */
+  expectedAdultWeight: number;
+  /** Strength of the prior (higher = trust prior more) */
+  strength: number;
+  /** Source description for UI */
+  source: string;
+}
+
 /**
- * Fit a logistic growth curve: weight = A * (1 - exp(-k * ageDays))
- * A is the asymptotic adult weight, k is the growth rate.
- * Uses grid search over plausible ranges, then refines with gradient descent.
+ * Compute the prior on adult weight from breed and parent weights.
+ * Parent weights override breed if available.
+ */
+function computePrior(
+  breed: string,
+  momWeightLbs: number | null,
+  dadWeightLbs: number | null,
+  displayUnit: Unit
+): PriorInfo {
+  // Parent weights (most accurate predictor for puppy adult weight)
+  if (momWeightLbs && dadWeightLbs) {
+    const avgLbs = (momWeightLbs + dadWeightLbs) / 2;
+    return {
+      expectedAdultWeight: displayUnit === "lbs" ? avgLbs : lbsToKg(avgLbs),
+      strength: 1.5, // strong prior
+      source: `parent average (${momWeightLbs} + ${dadWeightLbs}) / 2`,
+    };
+  }
+  if (momWeightLbs || dadWeightLbs) {
+    // Single parent - use it but with reduced strength
+    const lbs = momWeightLbs || dadWeightLbs!;
+    return {
+      expectedAdultWeight: displayUnit === "lbs" ? lbs : lbsToKg(lbs),
+      strength: 0.8,
+      source: momWeightLbs ? `mom's weight` : `dad's weight`,
+    };
+  }
+
+  // Fall back to breed prior
+  const breedPrior = getBreedPrior(breed);
+  const expectedLbs = breedPrior.meanAdultWeightLbs;
+  return {
+    expectedAdultWeight: displayUnit === "lbs" ? expectedLbs : lbsToKg(expectedLbs),
+    strength: breedPrior.matched ? 0.5 : 0.2,
+    source: breedPrior.matched
+      ? `${breedPrior.matchedName} typical (${breedPrior.adultWeightLbs.min}–${breedPrior.adultWeightLbs.max} lbs)`
+      : `medium-breed default`,
+  };
+}
+
+/**
+ * Fit logistic growth: weight = A * (1 - exp(-k * ageDays))
+ * with regularization toward a prior expected adult weight.
+ *
+ * totalError = sum((predicted - actual)^2) + lambda * (A - priorA)^2
+ *
+ * Lambda scales with prior strength and inversely with data quantity.
  */
 function fitGrowthCurve(
-  points: { ageDays: number; weight: number }[]
+  points: { ageDays: number; weight: number }[],
+  prior?: { expectedAdultWeight: number; strength: number }
 ): { adultWeight: number; k: number; rmse: number } | null {
   if (points.length < 2) return null;
 
   const currentMax = Math.max(...points.map(p => p.weight));
 
-  // Grid search: try various A (adult weight) and k (growth rate) values
-  let best = { A: currentMax * 2, k: 0.01, err: Infinity };
+  // Prior weight: scale by prior strength, weaken with more data points
+  const lambda = prior ? prior.strength * (10 / Math.max(points.length, 1)) : 0;
+  const priorA = prior?.expectedAdultWeight ?? 0;
 
-  // A ranges from current max to 10x current max
-  const minA = currentMax * 1.0;
-  const maxA = currentMax * 10;
+  // Search ranges - use prior to bias the range if available
+  const minA = prior
+    ? Math.max(currentMax, prior.expectedAdultWeight * 0.5)
+    : currentMax * 1.0;
+  const maxA = prior
+    ? Math.min(currentMax * 15, prior.expectedAdultWeight * 2.5)
+    : currentMax * 10;
 
-  for (let A = minA; A <= maxA; A += (maxA - minA) / 50) {
-    // k ranges from very slow (0.001) to very fast (0.05)
+  let best = { A: priorA || currentMax * 2, k: 0.01, err: Infinity };
+
+  for (let A = minA; A <= maxA; A += (maxA - minA) / 60) {
     for (let k = 0.001; k <= 0.05; k += 0.0005) {
-      let err = 0;
+      let dataErr = 0;
       for (const p of points) {
         const predicted = A * (1 - Math.exp(-k * p.ageDays));
-        err += (predicted - p.weight) ** 2;
+        dataErr += (predicted - p.weight) ** 2;
       }
-      if (err < best.err) {
-        best = { A, k, err };
+      const priorErr = lambda * (A - priorA) ** 2;
+      const totalErr = dataErr + priorErr;
+      if (totalErr < best.err) {
+        best = { A, k, err: totalErr };
       }
     }
   }
 
-  const rmse = Math.sqrt(best.err / points.length);
+  // Compute RMSE on data only (without prior penalty)
+  let dataErr = 0;
+  for (const p of points) {
+    const predicted = best.A * (1 - Math.exp(-best.k * p.ageDays));
+    dataErr += (predicted - p.weight) ** 2;
+  }
+  const rmse = Math.sqrt(dataErr / points.length);
   return { adultWeight: best.A, k: best.k, rmse };
+}
+
+/** Compute age (in days) at which puppy reaches a given fraction of adult weight. */
+function ageAtFraction(k: number, fraction: number): number {
+  if (fraction <= 0 || fraction >= 1) return NaN;
+  return -Math.log(1 - fraction) / k;
 }
 
 /** Simple linear extrapolation from the last 2 points (fallback when no birthday). */
@@ -98,7 +175,7 @@ function linearExtrapolate(
   const intercept = p2.weight - slope * p2.date;
 
   const result: { date: number; weight: number }[] = [];
-  const stepDays = Math.max(7, Math.round((untilDate - p2.date) / (30 * 86400000))); // weekly steps
+  const stepDays = Math.max(7, Math.round((untilDate - p2.date) / (30 * 86400000)));
   const stepMs = stepDays * 86400000;
   for (let t = p2.date; t <= untilDate; t += stepMs) {
     const w = slope * t + intercept;
@@ -107,7 +184,13 @@ function linearExtrapolate(
   return result;
 }
 
-export function WeightView({ events, birthday, breed }: WeightViewProps) {
+const MILESTONES = [
+  { fraction: 0.5, label: "50% — half size" },
+  { fraction: 0.75, label: "75% — almost there" },
+  { fraction: 0.95, label: "95% — full grown" },
+] as const;
+
+export function WeightView({ events, birthday, breed, momWeightLbs, dadWeightLbs }: WeightViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [weight, setWeight] = useState("");
@@ -117,6 +200,11 @@ export function WeightView({ events, birthday, breed }: WeightViewProps) {
   const [showProjection, setShowProjection] = useState(true);
 
   const birthdayDate = useMemo(() => birthday ? new Date(birthday + "T00:00:00") : null, [birthday]);
+
+  const prior = useMemo(
+    () => computePrior(breed, momWeightLbs, dadWeightLbs, displayUnit),
+    [breed, momWeightLbs, dadWeightLbs, displayUnit]
+  );
 
   const actualData = useMemo(() => {
     return events
@@ -134,7 +222,6 @@ export function WeightView({ events, birthday, breed }: WeightViewProps) {
       .sort((a, b) => a.date - b.date);
   }, [events, displayUnit]);
 
-  // Build projection using the logistic growth curve
   const projection = useMemo(() => {
     if (!showProjection || actualData.length < 2 || !birthdayDate) return null;
 
@@ -143,17 +230,17 @@ export function WeightView({ events, birthday, breed }: WeightViewProps) {
       weight: d.weight,
     }));
 
-    const fit = fitGrowthCurve(points);
+    const fit = fitGrowthCurve(points, prior);
     if (!fit) return null;
 
-    // Project forward: from now until 2 years from birthday (or 1 year from now, whichever is later)
+    // Project forward to a reasonable end date
     const lastDate = actualData[actualData.length - 1].date;
     const twoYearsFromBirth = addDays(birthdayDate, 2 * DAYS_PER_YEAR).getTime();
     const oneYearFromLast = addDays(new Date(lastDate), DAYS_PER_YEAR).getTime();
     const projectionEnd = Math.max(twoYearsFromBirth, oneYearFromLast);
 
     const projectedPoints: { date: number; projected: number }[] = [];
-    const stepMs = 7 * 86400000; // weekly steps
+    const stepMs = 7 * 86400000;
     for (let t = lastDate; t <= projectionEnd; t += stepMs) {
       const ageDays = differenceInDays(new Date(t), birthdayDate);
       if (ageDays < 0) continue;
@@ -161,34 +248,34 @@ export function WeightView({ events, birthday, breed }: WeightViewProps) {
       projectedPoints.push({ date: t, projected: w });
     }
 
-    // Find approximate date at 95% of adult weight (considered "full grown")
-    const targetWeight = fit.adultWeight * 0.95;
-    let fullGrownDate: number | null = null;
-    // Invert: ageDays = -ln(1 - targetWeight/A) / k
-    const ageAtFullGrown = -Math.log(1 - 0.95) / fit.k;
-    if (isFinite(ageAtFullGrown)) {
-      fullGrownDate = addDays(birthdayDate, ageAtFullGrown).getTime();
-    }
+    // Compute milestone dates
+    const milestones = MILESTONES.map(m => {
+      const ageDays = ageAtFraction(fit.k, m.fraction);
+      const date = isFinite(ageDays) ? addDays(birthdayDate, ageDays).getTime() : null;
+      return {
+        fraction: m.fraction,
+        label: m.label,
+        weight: fit.adultWeight * m.fraction,
+        date,
+      };
+    });
 
     return {
       points: projectedPoints,
       adultWeight: fit.adultWeight,
       rmse: fit.rmse,
-      targetWeight,
-      fullGrownDate,
+      milestones,
     };
-  }, [actualData, birthdayDate, showProjection]);
+  }, [actualData, birthdayDate, prior, showProjection]);
 
-  // Fallback: linear extrapolation when no birthday
   const linearProjection = useMemo(() => {
     if (!showProjection || actualData.length < 2 || birthdayDate) return null;
     const lastDate = actualData[actualData.length - 1].date;
-    const end = lastDate + 180 * 86400000; // 6 months out
+    const end = lastDate + 180 * 86400000;
     const points = linearExtrapolate(actualData, end);
     return points.map(p => ({ date: p.date, projected: p.weight }));
   }, [actualData, birthdayDate, showProjection]);
 
-  // Merge actual + projected data for the chart
   const chartData = useMemo(() => {
     const result: { date: number; weight?: number; projected?: number }[] = [];
     for (const d of actualData) {
@@ -216,7 +303,6 @@ export function WeightView({ events, birthday, breed }: WeightViewProps) {
     });
   }
 
-  // Chart x-axis spans from first actual entry to end of projection
   const minDate = actualData[0]?.date;
   const maxDate = chartData[chartData.length - 1]?.date;
   const currentWeight = actualData[actualData.length - 1]?.weight;
@@ -298,8 +384,8 @@ export function WeightView({ events, birthday, breed }: WeightViewProps) {
 
       {/* Projection summary card */}
       {projection && (
-        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200 p-4">
-          <div className="flex items-center justify-between mb-3">
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200 p-4 space-y-3">
+          <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-amber-900 uppercase tracking-wide">
               🔮 Growth projection
             </h2>
@@ -310,46 +396,65 @@ export function WeightView({ events, birthday, breed }: WeightViewProps) {
               {showProjection ? "Hide" : "Show"}
             </button>
           </div>
-          <div className="space-y-2">
+
+          <div>
+            <div className="text-[11px] text-stone-500 uppercase tracking-wide">
+              Estimated adult weight
+            </div>
+            <div className="text-2xl font-bold text-stone-800">
+              {projection.adultWeight.toFixed(1)} {displayUnit}
+            </div>
+          </div>
+
+          {growthProgress !== null && (
             <div>
-              <div className="text-[11px] text-stone-500 uppercase tracking-wide">
-                Estimated adult weight
+              <div className="flex items-center justify-between text-[11px] mb-1">
+                <span className="text-stone-500 uppercase tracking-wide">Growth progress</span>
+                <span className="font-semibold text-stone-700">{Math.round(growthProgress)}%</span>
               </div>
-              <div className="text-2xl font-bold text-stone-800">
-                {projection.adultWeight.toFixed(1)} {displayUnit}
+              <div className="h-2 bg-white rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-amber-400 to-orange-500"
+                  style={{ width: `${growthProgress}%` }}
+                />
               </div>
             </div>
-            {growthProgress !== null && (
-              <div>
-                <div className="flex items-center justify-between text-[11px] mb-1">
-                  <span className="text-stone-500 uppercase tracking-wide">Growth progress</span>
-                  <span className="font-semibold text-stone-700">{Math.round(growthProgress)}%</span>
-                </div>
-                <div className="h-2 bg-white rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-amber-400 to-orange-500"
-                    style={{ width: `${growthProgress}%` }}
-                  />
-                </div>
-              </div>
-            )}
-            {projection.fullGrownDate && (
-              <div className="text-[12px] text-stone-600">
-                Expected to reach ~95% of adult weight around{" "}
-                <span className="font-semibold">{format(new Date(projection.fullGrownDate), "MMM yyyy")}</span>
-              </div>
-            )}
-            {breed && (
-              <div className="text-[11px] text-stone-400 italic pt-1">
-                Projection based on {actualData.length} data points{breed ? ` for ${breed}` : ""}.
-                Accuracy improves with more entries.
-              </div>
-            )}
+          )}
+
+          {/* Milestone timeline */}
+          <div>
+            <div className="text-[11px] text-stone-500 uppercase tracking-wide mb-2">
+              Milestones
+            </div>
+            <div className="space-y-1.5">
+              {projection.milestones.map((m) => {
+                const reached = currentWeight !== undefined && currentWeight >= m.weight;
+                return (
+                  <div key={m.fraction} className="flex items-center justify-between text-[12px]">
+                    <div className="flex items-center gap-2">
+                      <span className={reached ? "text-green-600" : "text-stone-400"}>
+                        {reached ? "✓" : "○"}
+                      </span>
+                      <span className={reached ? "text-stone-700 line-through" : "text-stone-700"}>
+                        {m.label} ({m.weight.toFixed(1)} {displayUnit})
+                      </span>
+                    </div>
+                    <span className="text-stone-500 text-[11px]">
+                      {m.date ? format(new Date(m.date), "MMM yyyy") : "—"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="text-[11px] text-stone-500 italic pt-1 border-t border-amber-200">
+            Prior: {prior.source} · {actualData.length} data point{actualData.length === 1 ? "" : "s"}
           </div>
         </div>
       )}
 
-      {/* Weight chart */}
+      {/* Chart */}
       {actualData.length >= 2 ? (
         <div className="bg-white rounded-xl border border-stone-100 p-4">
           <h2 className="text-sm font-semibold text-stone-600 uppercase tracking-wide mb-4">
@@ -363,7 +468,7 @@ export function WeightView({ events, birthday, breed }: WeightViewProps) {
                 type="number"
                 scale="time"
                 domain={[minDate!, maxDate!]}
-                tickFormatter={(ts) => format(new Date(ts), "MMM d")}
+                tickFormatter={(ts) => format(new Date(ts), "MMM yy")}
                 tick={{ fontSize: 11, fill: "#a8a29e" }}
                 tickLine={false}
               />
@@ -424,6 +529,11 @@ export function WeightView({ events, birthday, breed }: WeightViewProps) {
               Add a birthday on the profile page for adult weight projection.
             </p>
           )}
+          {birthdayDate && !momWeightLbs && !dadWeightLbs && (
+            <p className="text-[11px] text-stone-400 italic mt-2 text-center">
+              Tip: add parent weights on the profile page for a more accurate projection.
+            </p>
+          )}
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-stone-100 p-4 text-center text-stone-400">
@@ -432,7 +542,7 @@ export function WeightView({ events, birthday, breed }: WeightViewProps) {
         </div>
       )}
 
-      {/* Weight history */}
+      {/* History */}
       <section>
         <h2 className="text-sm font-semibold text-stone-600 uppercase tracking-wide mb-3">History</h2>
         {actualData.length === 0 ? (
