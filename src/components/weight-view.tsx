@@ -198,6 +198,7 @@ export function WeightView({ events, birthday, breed, momWeightLbs, dadWeightLbs
   const [displayUnit, setDisplayUnit] = useState<Unit>("lbs");
   const [submitted, setSubmitted] = useState(false);
   const [showProjection, setShowProjection] = useState(true);
+  const [showMethodology, setShowMethodology] = useState(false);
 
   const birthdayDate = useMemo(() => birthday ? new Date(birthday + "T00:00:00") : null, [birthday]);
 
@@ -451,6 +452,100 @@ export function WeightView({ events, birthday, breed, momWeightLbs, dadWeightLbs
           <div className="text-[11px] text-stone-500 italic pt-1 border-t border-amber-200">
             Prior: {prior.source} · {actualData.length} data point{actualData.length === 1 ? "" : "s"}
           </div>
+        </div>
+      )}
+
+      {/* Methodology - collapsible */}
+      {projection && (
+        <div className="bg-white rounded-xl border border-stone-100 overflow-hidden">
+          <button
+            onClick={() => setShowMethodology(!showMethodology)}
+            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-stone-50 transition-colors"
+          >
+            <span className="text-sm font-semibold text-stone-600">
+              📐 How is this calculated?
+            </span>
+            <span className="text-stone-400 text-xs">
+              {showMethodology ? "▲" : "▼"}
+            </span>
+          </button>
+          {showMethodology && (
+            <div className="px-4 pb-4 space-y-3 text-[13px] text-stone-600 leading-relaxed border-t border-stone-100">
+              <div className="pt-3">
+                <div className="font-semibold text-stone-700 mb-1">The growth model</div>
+                <p>
+                  We fit a logistic curve to your data:
+                </p>
+                <div className="bg-stone-50 rounded-lg px-3 py-2 my-1.5 font-mono text-[12px] text-stone-700">
+                  weight = A × (1 − e<sup>−k × age</sup>)
+                </div>
+                <p className="text-[12px] text-stone-500">
+                  Puppies grow rapidly at first, then slow down as they approach adult size.
+                  <strong className="text-stone-700"> A</strong> is the asymptotic adult weight,
+                  <strong className="text-stone-700"> k</strong> is how fast they get there.
+                </p>
+              </div>
+
+              <div>
+                <div className="font-semibold text-stone-700 mb-1">Three signals, ranked by strength</div>
+                <ol className="list-decimal list-inside space-y-1 text-[12px]">
+                  <li>
+                    <strong className="text-stone-700">Parent weights</strong> — strongest predictor.
+                    Puppies tend to land between mom and dad.
+                  </li>
+                  <li>
+                    <strong className="text-stone-700">Breed match</strong> — typical adult range
+                    for the breed (we know 40+ common breeds).
+                  </li>
+                  <li>
+                    <strong className="text-stone-700">Size category default</strong> — fallback
+                    when breed is unknown.
+                  </li>
+                </ol>
+                <p className="text-[12px] text-stone-500 mt-1">
+                  Currently using: <span className="font-mono text-stone-700">{prior.source}</span>
+                </p>
+              </div>
+
+              <div>
+                <div className="font-semibold text-stone-700 mb-1">Regularization</div>
+                <p className="text-[12px]">
+                  We balance fitting your actual measurements against the prior expected adult weight:
+                </p>
+                <div className="bg-stone-50 rounded-lg px-3 py-2 my-1.5 font-mono text-[12px] text-stone-700">
+                  error = data_error + λ × (A − prior_A)²
+                </div>
+                <p className="text-[12px] text-stone-500">
+                  λ is high with few data points (trust the prior) and decreases as you log
+                  more weights (trust your data).
+                </p>
+              </div>
+
+              <div>
+                <div className="font-semibold text-stone-700 mb-1">Milestone dates</div>
+                <p className="text-[12px]">
+                  We invert the curve to find when puppy reaches X% of adult weight:
+                </p>
+                <div className="bg-stone-50 rounded-lg px-3 py-2 my-1.5 font-mono text-[12px] text-stone-700">
+                  age = −ln(1 − fraction) / k
+                </div>
+                <p className="text-[12px] text-stone-500">
+                  For 95% full-grown, this is roughly{" "}
+                  <span className="font-mono text-stone-700">3 / k</span> days after birthday.
+                </p>
+              </div>
+
+              <div className="pt-2 border-t border-stone-100">
+                <div className="font-semibold text-stone-700 mb-1">Caveats</div>
+                <ul className="list-disc list-inside space-y-1 text-[12px] text-stone-500">
+                  <li>Accuracy improves significantly with more data points (aim for 5+)</li>
+                  <li>The model assumes smooth growth — doesn&apos;t capture growth spurts</li>
+                  <li>Large breeds keep filling out muscle mass past their height plateau</li>
+                  <li>The 95% &quot;full grown&quot; threshold is approximate</li>
+                </ul>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
