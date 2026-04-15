@@ -15,7 +15,11 @@ export default async function WeightPage() {
           Track {user.puppyName}&apos;s growth over time
         </p>
       </div>
-      <WeightView events={weightEvents} />
+      <WeightView
+        events={weightEvents}
+        birthday={user.profile.birthday}
+        breed={user.profile.breed}
+      />
     </div>
   );
 }
