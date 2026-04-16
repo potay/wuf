@@ -51,16 +51,21 @@ steps:
       - "--max-instances"
       - "1"
 
-  # 5a. Get staging URL
+  # 5a. Get staging URL and ensure public access
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     entrypoint: bash
     args:
       - -c
       - |
-        gcloud run services describe wuf-staging \
+        gcloud run services add-iam-policy-binding wuf-staging \
           --region=us-central1 \
-          --format='value(status.url)' > /workspace/staging-url.txt
-        echo "Staging URL: $(cat /workspace/staging-url.txt)"
+          --member="allUsers" \
+          --role="roles/run.invoker" --quiet
+        STAGING_URL=$(gcloud run services describe wuf-staging \
+          --region=us-central1 \
+          --format='value(status.url)')
+        echo "$$STAGING_URL" > /workspace/staging-url.txt
+        echo "Staging URL: $$STAGING_URL"
 
   # 5b. E2E + visual regression tests against staging
   - name: "mcr.microsoft.com/playwright:v1.59.1-noble"
