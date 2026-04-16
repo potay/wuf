@@ -12,6 +12,7 @@ import { ScheduleNotifier } from "@/components/schedule-notifier";
 import { TimezoneSetter } from "@/components/timezone-setter";
 import { LocalTime } from "@/components/local-time";
 import { PuppyAvatar } from "@/components/puppy-avatar";
+import { ShareButton } from "@/components/share-button";
 import { type EventType } from "@/db/schema";
 import { getUserTimezone, getDayBoundsInTimezone } from "@/lib/timezone";
 import Link from "next/link";
@@ -63,8 +64,13 @@ export default async function HomePage() {
               className="w-24 h-24 -mb-1"
             />
             <div className="flex-1 pb-2">
-              <p className="text-[12px] opacity-50 font-medium">Good day!</p>
-              <h1 className="text-[22px] text-white leading-tight">{user.puppyName}&apos;s<br/>Dashboard</h1>
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[12px] opacity-50 font-medium">Good day!</p>
+                  <h1 className="text-[22px] text-white leading-tight">{user.puppyName}&apos;s<br/>Dashboard</h1>
+                </div>
+                <ShareButton puppyName={user.puppyName} inviteCode={user.inviteCode} />
+              </div>
             </div>
           </div>
           <CrateTimer inCrate={crateStatus.inCrate} since={crateStatus.since} puppyName={user.puppyName} />

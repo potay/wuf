@@ -10,7 +10,7 @@ export function proxy(request: NextRequest) {
   }
 
   // Allow login page, static assets, service worker, and push check (Cloud Scheduler)
-  if (pathname === "/login" || pathname === "/onboarding" || pathname === "/api/push/check") {
+  if (pathname === "/login" || pathname === "/onboarding" || pathname === "/api/push/check" || pathname.startsWith("/p/")) {
     return NextResponse.next();
   }
 
