@@ -92,7 +92,7 @@ async function findPuppyByCustomerId(customerId: string): Promise<string | null>
   return snapshot.empty ? null : snapshot.docs[0].id;
 }
 
-function mapStripeStatus(status: string): string {
+export function mapStripeStatus(status: string): string {
   switch (status) {
     case "active":
     case "trialing":

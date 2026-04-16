@@ -1,4 +1,11 @@
 steps:
+  # Validate: lint + typecheck + unit tests (must pass before build)
+  - name: "node:20-alpine"
+    entrypoint: sh
+    args:
+      - -c
+      - "npm ci && npm run lint && npm run typecheck && npm run test:ci"
+
   - name: "gcr.io/cloud-builders/docker"
     args:
       - "build"

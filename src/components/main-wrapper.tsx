@@ -6,7 +6,8 @@ const NO_PADDING = ["/login", "/onboarding", "/landing"];
 
 export function MainWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isPublic = NO_PADDING.includes(pathname) || pathname.startsWith("/p/");
+  const hasCookie = typeof document !== "undefined" && document.cookie.includes("__session");
+  const isPublic = NO_PADDING.includes(pathname) || pathname.startsWith("/p/") || (pathname === "/" && !hasCookie);
 
   return (
     <main className={`flex-1 scroll-touch ${isPublic ? "" : "pb-20"}`}>

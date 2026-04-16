@@ -5,7 +5,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { db } from "@/db";
-import { type PuppyProfile, type SubscriptionStatus } from "@/db/schema";
+import { type PuppyProfile } from "@/db/schema";
+import { computeSubscriptionState } from "@/lib/subscription";
 
 const SESSION_COOKIE_NAME = "__session";
 const SESSION_EXPIRY_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
@@ -81,16 +82,12 @@ export const getCurrentUser = cache(async () => {
   const puppyData = puppyDoc.data() || {};
 
   // Determine write access based on trial/subscription status
-  const subscriptionStatus = (puppyData.subscriptionStatus as SubscriptionStatus) || "trialing";
   const trialEndsAt = puppyData.trialEndsAt?.toDate?.()?.getTime?.() || 0;
-  const now = Date.now();
-
-  const trialDaysLeft = trialEndsAt > 0
-    ? Math.max(0, Math.ceil((trialEndsAt - now) / (24 * 60 * 60 * 1000)))
-    : 0;
-
-  const canWrite = subscriptionStatus === "active"
-    || (subscriptionStatus === "trialing" && trialDaysLeft > 0);
+  const { canWrite, subscriptionStatus, trialDaysLeft } = computeSubscriptionState(
+    puppyData.subscriptionStatus,
+    trialEndsAt,
+    Date.now()
+  );
 
   return {
     uid: session.uid,

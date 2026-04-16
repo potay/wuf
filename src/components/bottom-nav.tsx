@@ -37,7 +37,9 @@ export function BottomNav() {
   const isMoreActive = ALL_MORE_HREFS.includes(pathname as typeof ALL_MORE_HREFS[number]);
 
   // Hide on public/auth pages
-  if (HIDDEN_ON.includes(pathname) || pathname.startsWith("/p/")) {
+  // Also hide on landing page (proxy rewrites / to /landing, so pathname is still /)
+  const hasCookie = typeof document !== "undefined" && document.cookie.includes("__session");
+  if (HIDDEN_ON.includes(pathname) || pathname.startsWith("/p/") || (pathname === "/" && !hasCookie)) {
     return null;
   }
 

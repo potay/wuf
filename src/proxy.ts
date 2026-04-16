@@ -16,6 +16,7 @@ export function proxy(request: NextRequest) {
     pathname === "/landing" ||
     pathname === "/api/push/check" ||
     pathname === "/api/stripe/webhook" ||
+    pathname === "/api/health" ||
     pathname.startsWith("/p/")
   ) {
     return NextResponse.next();

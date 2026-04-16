@@ -93,7 +93,7 @@ export default function LandingPage() {
                 className="px-8 py-4 rounded-2xl text-[16px] font-bold text-white shadow-lg"
                 style={{ background: "var(--accent)", boxShadow: "0 4px 20px rgba(196,114,58,0.3)" }}
               >
-                Start your free trial
+                Start for free
               </Link>
               <span className="text-[13px]" style={{ color: "var(--fg-3)" }}>
                 14 days free, then $3/mo
@@ -342,7 +342,7 @@ export default function LandingPage() {
           className="inline-block px-10 py-4 rounded-2xl text-[17px] font-bold text-white shadow-xl"
           style={{ background: "var(--accent)", boxShadow: "0 8px 30px rgba(196,114,58,0.35)" }}
         >
-          Start your free trial →
+          Start for free →
         </Link>
       </section>
 
