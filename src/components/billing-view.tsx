@@ -105,14 +105,19 @@ export function BillingView({ canWrite, subscriptionStatus, trialDaysLeft, trial
           )}
 
           {isActive && (
-            <button
-              onClick={handlePortal}
-              disabled={loading !== null}
-              className="w-full py-4 rounded-2xl text-[15px] font-bold transition-colors"
-              style={{ background: "var(--bg)", color: "var(--fg-2)" }}
-            >
-              {loading === "portal" ? "Opening..." : "Manage billing"}
-            </button>
+            <>
+              <button
+                onClick={handlePortal}
+                disabled={loading !== null}
+                className="w-full py-4 rounded-2xl text-[15px] font-bold transition-colors"
+                style={{ background: "var(--bg)", color: "var(--fg-2)" }}
+              >
+                {loading === "portal" ? "Opening..." : "Manage billing"}
+              </button>
+              <p className="text-[12px] text-center" style={{ color: "var(--fg-3)" }}>
+                Update payment method, view invoices, or cancel your subscription
+              </p>
+            </>
           )}
         </div>
       )}

@@ -31,14 +31,17 @@ export async function POST(request: NextRequest) {
     await puppyRef.update({ stripeCustomerId: customerId });
   }
 
-  const { origin } = new URL(request.url);
+  // Use X-Forwarded-Host or Host header for the public URL (Cloud Run sets these)
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || new URL(request.url).host;
+  const proto = request.headers.get("x-forwarded-proto") || "https";
+  const baseUrl = `${proto}://${host}`;
 
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: "subscription",
     line_items: [{ price: WUF_PRO_PRICE_ID, quantity: 1 }],
-    success_url: `${origin}/billing?success=true`,
-    cancel_url: `${origin}/billing?cancelled=true`,
+    success_url: `${baseUrl}/billing?success=true`,
+    cancel_url: `${baseUrl}/billing?cancelled=true`,
     metadata: { puppyId: user.puppyId },
   });
 

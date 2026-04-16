@@ -18,11 +18,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No billing account found." }, { status: 400 });
   }
 
-  const { origin } = new URL(request.url);
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || new URL(request.url).host;
+  const proto = request.headers.get("x-forwarded-proto") || "https";
+  const baseUrl = `${proto}://${host}`;
 
   const session = await stripe.billingPortal.sessions.create({
     customer: customerId,
-    return_url: `${origin}/billing`,
+    return_url: `${baseUrl}/billing`,
   });
 
   return NextResponse.json({ url: session.url });
