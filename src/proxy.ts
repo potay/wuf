@@ -9,14 +9,27 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Allow login page, static assets, service worker, and push check (Cloud Scheduler)
-  if (pathname === "/login" || pathname === "/onboarding" || pathname === "/api/push/check" || pathname.startsWith("/p/")) {
+  // Public routes - no auth required
+  if (
+    pathname === "/login" ||
+    pathname === "/onboarding" ||
+    pathname === "/landing" ||
+    pathname === "/api/push/check" ||
+    pathname.startsWith("/p/")
+  ) {
     return NextResponse.next();
   }
 
   const session = request.cookies.get("__session")?.value;
+
+  // Unauthenticated visitors to the root see the landing page
+  if (!session && pathname === "/") {
+    return NextResponse.rewrite(new URL("/landing", request.url));
+  }
+
+  // Other unauthenticated requests go to the landing page
   if (!session) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL("/landing", request.url));
   }
 
   return NextResponse.next();
