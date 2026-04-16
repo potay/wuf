@@ -3,6 +3,5 @@ export default function LoginLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Login has its own full-screen layout - hide the bottom nav
-  return <div className="fixed inset-0 z-[60] bg-background">{children}</div>;
+  return <div className="fixed inset-0 z-[60] bg-background overflow-auto">{children}</div>;
 }
