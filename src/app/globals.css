@@ -38,6 +38,8 @@
 
 * { -webkit-tap-highlight-color: transparent; }
 
+/* z-index layers: nav=50, modal-backdrop=60, modal-content=60, toast=70 */
+
 body {
   background: var(--bg);
   color: var(--fg);

@@ -50,9 +50,9 @@ export function CustomEventEditor({ onClose }: CustomEventEditorProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30" onClick={onClose}>
+    <div className="fixed inset-0 z-60 flex items-end justify-center bg-black/30" onClick={onClose}>
       <div
-        className="w-full max-w-lg bg-white rounded-t-3xl p-5 space-y-4"
+        className="w-full max-w-lg bg-white rounded-t-3xl p-5 safe-bottom space-y-4"
         style={{ boxShadow: "var(--shadow-lg)" }}
         onClick={(e) => e.stopPropagation()}
       >

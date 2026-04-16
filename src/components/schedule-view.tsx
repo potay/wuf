@@ -51,7 +51,7 @@ function ConfirmDialog({
   onCancel: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40">
       <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm mx-4 space-y-4">
         <h3 className="text-base font-semibold text-stone-800">{title}</h3>
         <p className="text-sm text-stone-500">{description}</p>
