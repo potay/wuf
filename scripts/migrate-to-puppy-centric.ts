@@ -1,9 +1,9 @@
 /**
+ * DO NOT RUN - Migration completed. Kept for historical reference only.
+ *
  * Migration: move data from users/{uid}/ subcollections to puppies/{puppyId}/ subcollections.
  * Creates a puppy doc with the profile data, invite code, and members list.
  * Updates the user doc with activePuppyId.
- *
- * Usage: npx tsx scripts/migrate-to-puppy-centric.ts
  */
 
 import { initializeApp, applicationDefault } from "firebase-admin/app";

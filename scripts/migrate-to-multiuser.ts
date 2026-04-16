@@ -1,8 +1,8 @@
 /**
+ * DO NOT RUN - Migration completed. Kept for historical reference only.
+ *
  * One-time migration script: copies all top-level Firestore collections
  * into users/{uid}/ subcollections for the specified user.
- *
- * Usage: npx tsx scripts/migrate-to-multiuser.ts
  *
  * This COPIES data (does not delete originals). Old data stays intact
  * until you manually verify and delete it.
