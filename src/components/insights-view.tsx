@@ -54,32 +54,47 @@ function computeHourDistribution(events: Event[], type: EventType): number[] {
   return hours;
 }
 
-function computeMealToPottyDelay(events: Event[]): number | null {
-  const meals = events
-    .filter((e) => e.type === "meal")
+/**
+ * Compute average delay from a trigger event to the first follow-up event within the window.
+ * e.g., triggers=["water"], followUps=["pee"] finds avg time from drinking water to peeing.
+ */
+function computeDelay(
+  events: Event[],
+  triggers: EventType[],
+  followUps: EventType[],
+  windowMinutes: number = 120
+): { avgMinutes: number; sampleCount: number } | null {
+  const triggerSet = new Set(triggers);
+  const followUpSet = new Set(followUps);
+
+  const triggerEvents = events
+    .filter((e) => triggerSet.has(e.type as EventType))
     .sort((a, b) => new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime());
 
-  const pees = events
-    .filter((e) => e.type === "pee" || e.type === "poop")
+  const followUpEvents = events
+    .filter((e) => followUpSet.has(e.type as EventType))
     .sort((a, b) => new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime());
 
-  if (meals.length === 0 || pees.length === 0) return null;
+  if (triggerEvents.length === 0 || followUpEvents.length === 0) return null;
 
+  const windowMs = windowMinutes * 60 * 1000;
   const delays: number[] = [];
-  for (const meal of meals) {
-    const mealTime = new Date(meal.occurredAt).getTime();
-    // Find the first potty event after this meal (within 2 hours)
-    const nextPotty = pees.find((p) => {
-      const pTime = new Date(p.occurredAt).getTime();
-      return pTime > mealTime && pTime - mealTime < 120 * 60 * 1000;
+  for (const trigger of triggerEvents) {
+    const tTime = new Date(trigger.occurredAt).getTime();
+    const next = followUpEvents.find((f) => {
+      const fTime = new Date(f.occurredAt).getTime();
+      return fTime > tTime && fTime - tTime < windowMs;
     });
-    if (nextPotty) {
-      delays.push(differenceInMinutes(new Date(nextPotty.occurredAt), new Date(meal.occurredAt)));
+    if (next) {
+      delays.push(differenceInMinutes(new Date(next.occurredAt), new Date(trigger.occurredAt)));
     }
   }
 
   if (delays.length === 0) return null;
-  return Math.round(delays.reduce((a, b) => a + b, 0) / delays.length);
+  return {
+    avgMinutes: Math.round(delays.reduce((a, b) => a + b, 0) / delays.length),
+    sampleCount: delays.length,
+  };
 }
 
 function formatMinutes(min: number): string {
@@ -160,7 +175,8 @@ function DailyCountsLast7Days({ events, type }: { events: Event[]; type: EventTy
 export function InsightsView({ events }: InsightsViewProps) {
   const peeStats = computeIntervals(events, "pee");
   const poopStats = computeIntervals(events, "poop");
-  const mealToPotty = computeMealToPottyDelay(events);
+  const waterToPee = computeDelay(events, ["water"], ["pee"], 120);
+  const mealToPoop = computeDelay(events, ["meal"], ["poop"], 180);
   const peeHours = computeHourDistribution(events, "pee");
   const poopHours = computeHourDistribution(events, "poop");
   const accidentCount = events.filter((e) => e.type === "accident").length;
@@ -215,22 +231,41 @@ export function InsightsView({ events }: InsightsViewProps) {
         </div>
       </section>
 
-      {/* Meal to potty correlation */}
-      {mealToPotty !== null && (
-        <section className="bg-white rounded-xl border border-stone-100 p-4">
-          <h2 className="text-sm font-semibold text-stone-600 uppercase tracking-wide mb-2">
-            Meal to potty
+      {/* Correlation delays */}
+      {(waterToPee || mealToPoop) && (
+        <section>
+          <h2 className="text-sm font-semibold text-stone-600 uppercase tracking-wide mb-3">
+            Timing patterns
           </h2>
-          <div className="flex items-center gap-3">
-            <span className="text-2xl whitespace-nowrap shrink-0">🍖→💧</span>
-            <div>
-              <div className="text-2xl font-bold text-stone-800">
-                ~{formatMinutes(mealToPotty)}
+          <div className="grid grid-cols-2 gap-3">
+            {waterToPee && (
+              <div className="bg-white rounded-xl border border-stone-100 p-3">
+                <span className="text-xl whitespace-nowrap">💦→💧</span>
+                <div className="text-xl font-bold text-stone-800 mt-1">
+                  ~{formatMinutes(waterToPee.avgMinutes)}
+                </div>
+                <div className="text-[11px] text-stone-400 mt-0.5">
+                  Water to pee
+                </div>
+                <div className="text-[10px] text-stone-300 mt-0.5">
+                  n = {waterToPee.sampleCount}
+                </div>
               </div>
-              <div className="text-xs text-stone-400">
-                Average time from meal to first bathroom break
+            )}
+            {mealToPoop && (
+              <div className="bg-white rounded-xl border border-stone-100 p-3">
+                <span className="text-xl whitespace-nowrap">🍖→💩</span>
+                <div className="text-xl font-bold text-stone-800 mt-1">
+                  ~{formatMinutes(mealToPoop.avgMinutes)}
+                </div>
+                <div className="text-[11px] text-stone-400 mt-0.5">
+                  Meal to poop
+                </div>
+                <div className="text-[10px] text-stone-300 mt-0.5">
+                  n = {mealToPoop.sampleCount}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </section>
       )}
