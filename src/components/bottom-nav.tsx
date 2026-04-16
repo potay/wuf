@@ -27,11 +27,18 @@ const MORE_NAV = [
 
 const ALL_MORE_HREFS = MORE_NAV.map((i) => i.href);
 
+const HIDDEN_ON = ["/login", "/onboarding", "/landing"];
+
 export function BottomNav() {
   const pathname = usePathname();
   const [showMore, setShowMore] = useState(false);
   const [, startTransition] = useTransition();
   const isMoreActive = ALL_MORE_HREFS.includes(pathname as typeof ALL_MORE_HREFS[number]);
+
+  // Hide on public/auth pages
+  if (HIDDEN_ON.includes(pathname) || pathname.startsWith("/p/")) {
+    return null;
+  }
 
   return (
     <>

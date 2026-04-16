@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { BottomNav } from "@/components/bottom-nav";
+import { MainWrapper } from "@/components/main-wrapper";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -40,7 +41,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${jakarta.variable} h-full`}>
       <body className="min-h-full flex flex-col">
-        <main className="flex-1 pb-20 scroll-touch">{children}</main>
+        <MainWrapper>{children}</MainWrapper>
         <BottomNav />
       </body>
     </html>
