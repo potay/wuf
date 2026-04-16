@@ -3,36 +3,86 @@ import { db } from "@/db";
 import { Timestamp } from "firebase-admin/firestore";
 import { getWebPush } from "@/lib/web-push";
 
-/** Send push notification to all members of a puppy. */
-async function sendToPuppyMembers(puppyId: string, memberUids: string[], payload: { title: string; body: string; tag: string; url?: string }) {
+interface NotificationSettings {
+  crateAlerts: boolean;
+  scheduleAlerts: boolean;
+  quietHoursStart: string | null;
+  quietHoursEnd: string | null;
+}
+
+const DEFAULT_SETTINGS: NotificationSettings = {
+  crateAlerts: true,
+  scheduleAlerts: true,
+  quietHoursStart: null,
+  quietHoursEnd: null,
+};
+
+function isInQuietHours(settings: NotificationSettings): boolean {
+  if (!settings.quietHoursStart || !settings.quietHoursEnd) return false;
+  const now = new Date();
+  const currentMin = now.getHours() * 60 + now.getMinutes();
+  const [startH, startM] = settings.quietHoursStart.split(":").map(Number);
+  const [endH, endM] = settings.quietHoursEnd.split(":").map(Number);
+  const startMin = startH * 60 + startM;
+  const endMin = endH * 60 + endM;
+
+  if (startMin <= endMin) {
+    return currentMin >= startMin && currentMin < endMin;
+  }
+  // Wraps midnight (e.g., 22:00 - 07:00)
+  return currentMin >= startMin || currentMin < endMin;
+}
+
+/** Send push to all members of a puppy, deduped to one device per user. */
+async function sendToPuppyMembers(
+  puppyId: string,
+  payload: { title: string; body: string; tag: string; url?: string },
+  alertType: "crate" | "schedule"
+) {
   const webpush = getWebPush();
   const puppyRef = db.collection("puppies").doc(puppyId);
+  const puppyData = (await puppyRef.get()).data() || {};
+  const notifSettings = (puppyData.notificationSettings || {}) as Record<string, NotificationSettings>;
 
-  // Collect all push subscriptions from all members
-  for (const uid of memberUids) {
-    const subsSnapshot = await db.collection("users").doc(uid).collection("push_subscriptions").get();
-    // Also check puppy-level subscriptions
-    const puppySubsSnapshot = await puppyRef.collection("push_subscriptions").get();
-    const allSubs = [...subsSnapshot.docs, ...puppySubsSnapshot.docs];
+  // Get all subscriptions, dedup by uid (keep most recently updated)
+  const subsSnapshot = await puppyRef.collection("push_subscriptions").get();
+  const latestByUid = new Map<string, FirebaseFirestore.DocumentSnapshot>();
 
-    for (const doc of allSubs) {
-      const subscription = doc.data();
-      try {
-        await webpush.sendNotification(
-          { endpoint: subscription.endpoint, keys: subscription.keys },
-          JSON.stringify(payload)
-        );
-      } catch (error: unknown) {
-        const statusCode = (error as { statusCode?: number }).statusCode;
-        if (statusCode === 404 || statusCode === 410) {
-          await doc.ref.delete();
-        }
+  for (const doc of subsSnapshot.docs) {
+    const data = doc.data();
+    const uid = data.uid as string;
+    if (!uid) continue;
+
+    const existing = latestByUid.get(uid);
+    if (!existing || (data.updatedAt?.toDate?.() > existing.data()?.updatedAt?.toDate?.())) {
+      latestByUid.set(uid, doc);
+    }
+  }
+
+  for (const [uid, doc] of latestByUid) {
+    // Check per-user notification settings
+    const settings = { ...DEFAULT_SETTINGS, ...(notifSettings[uid] || {}) };
+
+    if (alertType === "crate" && !settings.crateAlerts) continue;
+    if (alertType === "schedule" && !settings.scheduleAlerts) continue;
+    if (isInQuietHours(settings)) continue;
+
+    const sub = doc.data()!;
+    try {
+      await webpush.sendNotification(
+        { endpoint: sub.endpoint, keys: sub.keys },
+        JSON.stringify(payload)
+      );
+    } catch (error: unknown) {
+      const statusCode = (error as { statusCode?: number }).statusCode;
+      if (statusCode === 404 || statusCode === 410) {
+        await doc.ref.delete(); // Clean stale subscription
       }
     }
   }
 }
 
-async function checkCrateForPuppy(puppyId: string, puppyName: string, memberUids: string[]) {
+async function checkCrateForPuppy(puppyId: string, puppyName: string) {
   const puppyRef = db.collection("puppies").doc(puppyId);
   const eventsCol = puppyRef.collection("events");
 
@@ -71,25 +121,25 @@ async function checkCrateForPuppy(puppyId: string, puppyName: string, memberUids
   if (lastSentMin < 30) return;
 
   if (elapsedMin >= 120) {
-    await sendToPuppyMembers(puppyId, memberUids, {
+    await sendToPuppyMembers(puppyId, {
       title: `${puppyName} needs out!`,
       body: `${puppyName} has been in the crate for ${Math.round(elapsedMin)} minutes. Time to let them out!`,
       tag: "crate-urgent",
       url: "/",
-    });
+    }, "crate");
     await pushLogCol.doc().set({ type: "crate", sentAt: Timestamp.now() });
   } else if (elapsedMin >= 60) {
-    await sendToPuppyMembers(puppyId, memberUids, {
+    await sendToPuppyMembers(puppyId, {
       title: "Crate check-in",
       body: `${puppyName} has been in the crate for ${Math.round(elapsedMin)} minutes. Plan to let them out soon.`,
       tag: "crate-warning",
       url: "/",
-    });
+    }, "crate");
     await pushLogCol.doc().set({ type: "crate", sentAt: Timestamp.now() });
   }
 }
 
-async function checkScheduleForPuppy(puppyId: string, memberUids: string[]) {
+async function checkScheduleForPuppy(puppyId: string) {
   const now = new Date();
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
@@ -115,12 +165,12 @@ async function checkScheduleForPuppy(puppyId: string, memberUids: string[]) {
         .get();
 
       if (alreadySent.empty) {
-        await sendToPuppyMembers(puppyId, memberUids, {
+        await sendToPuppyMembers(puppyId, {
           title: `📅 ${item.activity}`,
           body: item.notes || `It's time for: ${item.activity}`,
           tag: `schedule-${doc.id}`,
           url: "/schedule",
-        });
+        }, "schedule");
         await pushLogCol.doc().set({
           type: `schedule-${doc.id}`,
           sentAt: Timestamp.now(),
@@ -130,7 +180,6 @@ async function checkScheduleForPuppy(puppyId: string, memberUids: string[]) {
   }
 }
 
-/** Called periodically by Cloud Scheduler to check all puppies' notification triggers */
 export async function GET() {
   try {
     const puppiesSnapshot = await db.collection("puppies").get();
@@ -139,13 +188,10 @@ export async function GET() {
       const puppyId = puppyDoc.id;
       const puppyData = puppyDoc.data();
       const puppyName = puppyData.name || "Puppy";
-      const memberUids = (puppyData.members || []).map((m: { uid: string }) => m.uid);
-
-      if (memberUids.length === 0) continue;
 
       await Promise.all([
-        checkCrateForPuppy(puppyId, puppyName, memberUids),
-        checkScheduleForPuppy(puppyId, memberUids),
+        checkCrateForPuppy(puppyId, puppyName),
+        checkScheduleForPuppy(puppyId),
       ]);
     }
 

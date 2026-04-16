@@ -17,13 +17,15 @@ function docToEvent(doc: FirebaseFirestore.DocumentSnapshot): Event {
 }
 
 export async function logEvent(
-  type: EventType,
+  type: string,
   notes?: string,
   metadata?: string,
   occurredAt?: Date
 ) {
-  await requireWriteAccess();
-  if (!EVENT_TYPES.includes(type)) {
+  const user = await requireWriteAccess();
+  // Accept built-in types and custom types defined on the puppy
+  const customIds = (user.profile.customEvents || []).map((e: { id: string }) => e.id);
+  if (!EVENT_TYPES.includes(type as EventType) && !customIds.includes(type)) {
     throw new Error(`Invalid event type: ${type}`);
   }
   const now = new Date();

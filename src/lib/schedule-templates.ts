@@ -1,0 +1,86 @@
+export interface ScheduleTemplate {
+  id: string;
+  name: string;
+  description: string;
+  ageRange: string;
+  items: { time: string; activity: string; notes: string | null }[];
+}
+
+export const SCHEDULE_TEMPLATES: ScheduleTemplate[] = [
+  {
+    id: "young-puppy",
+    name: "Young puppy",
+    description: "Potty every 2 hours, 3 meals, structured crate naps",
+    ageRange: "8-12 weeks",
+    items: [
+      { time: "06:30", activity: "Wake up + potty", notes: "Take outside immediately" },
+      { time: "07:00", activity: "Breakfast", notes: null },
+      { time: "07:15", activity: "Potty", notes: "Usually goes within 15 min of eating" },
+      { time: "07:30", activity: "Play time", notes: "15-20 min supervised" },
+      { time: "08:00", activity: "Crate nap", notes: "1-2 hours" },
+      { time: "10:00", activity: "Potty", notes: null },
+      { time: "10:15", activity: "Training", notes: "5-10 min, keep it fun" },
+      { time: "10:30", activity: "Play time", notes: null },
+      { time: "11:00", activity: "Crate nap", notes: null },
+      { time: "12:30", activity: "Lunch", notes: null },
+      { time: "12:45", activity: "Potty", notes: null },
+      { time: "13:00", activity: "Play time", notes: null },
+      { time: "13:30", activity: "Crate nap", notes: null },
+      { time: "15:30", activity: "Potty", notes: null },
+      { time: "15:45", activity: "Walk", notes: "Short, age-appropriate" },
+      { time: "16:30", activity: "Play time", notes: null },
+      { time: "17:00", activity: "Crate nap", notes: null },
+      { time: "18:30", activity: "Dinner", notes: null },
+      { time: "18:45", activity: "Potty", notes: null },
+      { time: "19:00", activity: "Family time", notes: null },
+      { time: "20:00", activity: "Last potty", notes: "Last water before bed" },
+      { time: "20:30", activity: "Bedtime crate", notes: null },
+    ],
+  },
+  {
+    id: "adolescent",
+    name: "Adolescent puppy",
+    description: "Potty every 3 hours, 2-3 meals, longer play sessions",
+    ageRange: "3-6 months",
+    items: [
+      { time: "07:00", activity: "Wake up + potty", notes: null },
+      { time: "07:30", activity: "Breakfast", notes: null },
+      { time: "07:45", activity: "Potty", notes: null },
+      { time: "08:00", activity: "Walk", notes: "20-30 min" },
+      { time: "09:00", activity: "Training", notes: "10-15 min" },
+      { time: "09:30", activity: "Crate / rest", notes: null },
+      { time: "12:00", activity: "Potty", notes: null },
+      { time: "12:15", activity: "Lunch", notes: null },
+      { time: "12:30", activity: "Potty", notes: null },
+      { time: "13:00", activity: "Play / socialization", notes: null },
+      { time: "14:00", activity: "Crate / rest", notes: null },
+      { time: "15:30", activity: "Potty + walk", notes: null },
+      { time: "16:30", activity: "Training", notes: null },
+      { time: "17:00", activity: "Play time", notes: null },
+      { time: "18:00", activity: "Dinner", notes: null },
+      { time: "18:15", activity: "Potty", notes: null },
+      { time: "19:00", activity: "Family time", notes: null },
+      { time: "20:30", activity: "Last potty", notes: null },
+      { time: "21:00", activity: "Bedtime", notes: null },
+    ],
+  },
+  {
+    id: "adult",
+    name: "Adult routine",
+    description: "3-4 potty breaks, 2 meals, walks and exercise",
+    ageRange: "6+ months",
+    items: [
+      { time: "07:00", activity: "Wake up + potty", notes: null },
+      { time: "07:30", activity: "Breakfast", notes: null },
+      { time: "08:00", activity: "Morning walk", notes: "30-45 min" },
+      { time: "12:00", activity: "Midday potty", notes: null },
+      { time: "12:15", activity: "Play / training", notes: null },
+      { time: "17:00", activity: "Afternoon walk", notes: "30-45 min" },
+      { time: "18:00", activity: "Dinner", notes: null },
+      { time: "18:30", activity: "Potty", notes: null },
+      { time: "20:00", activity: "Evening play", notes: null },
+      { time: "21:00", activity: "Last potty", notes: null },
+      { time: "21:30", activity: "Bedtime", notes: null },
+    ],
+  },
+];

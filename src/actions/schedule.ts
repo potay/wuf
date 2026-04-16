@@ -1,6 +1,7 @@
 "use server";
 
 import { type ScheduleItem } from "@/db/schema";
+import { db } from "@/db";
 import { requireWriteAccess, getUserCollection } from "@/lib/session";
 
 function docToItem(doc: FirebaseFirestore.DocumentSnapshot): ScheduleItem {
@@ -52,4 +53,24 @@ export async function deleteScheduleItem(id: string) {
   await requireWriteAccess();
   const col = await getUserCollection("schedule");
   await col.doc(id).delete();
+}
+
+/** Replace the entire schedule with new items (for template application). */
+export async function replaceSchedule(items: { time: string; activity: string; notes: string | null }[]) {
+  await requireWriteAccess();
+  const col = await getUserCollection("schedule");
+
+  // Delete all existing items
+  const existing = await col.get();
+  const batch = db.batch();
+  for (const doc of existing.docs) {
+    batch.delete(doc.ref);
+  }
+
+  // Add new items
+  for (const item of items) {
+    batch.set(col.doc(), { time: item.time, activity: item.activity, notes: item.notes, enabled: true });
+  }
+
+  await batch.commit();
 }

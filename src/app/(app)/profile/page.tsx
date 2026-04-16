@@ -1,11 +1,23 @@
+import { db } from "@/db";
 import { getProfile } from "@/actions/profile";
 import { ProfileForm } from "@/components/profile-form";
+import { NotificationSettings } from "@/components/notification-settings";
 import { getCurrentUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
   const [profile, user] = await Promise.all([getProfile(), getCurrentUser()]);
+
+  // Get notification settings for this user
+  const puppyDoc = await db.collection("puppies").doc(user.puppyId).get();
+  const allSettings = puppyDoc.data()?.notificationSettings || {};
+  const mySettings = allSettings[user.uid] || {
+    crateAlerts: true,
+    scheduleAlerts: true,
+    quietHoursStart: null,
+    quietHoursEnd: null,
+  };
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
@@ -32,6 +44,9 @@ export default async function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* Notification settings */}
+      <NotificationSettings settings={mySettings} canWrite={user.canWrite} />
 
       <ProfileForm profile={profile} canWrite={user.canWrite} />
     </div>

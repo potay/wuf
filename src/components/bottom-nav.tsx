@@ -23,6 +23,7 @@ const MORE_NAV = [
   { href: "/milestones", label: "Milestones" },
   { href: "/illustration", label: "Illustration" },
   { href: "/billing", label: "Billing" },
+  { href: "/feedback", label: "Feedback" },
   { href: "/profile", label: "Profile" },
 ] as const;
 

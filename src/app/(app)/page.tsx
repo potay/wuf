@@ -15,6 +15,7 @@ import { PuppyAvatar } from "@/components/puppy-avatar";
 import { ShareButton } from "@/components/share-button";
 import { UpgradeBanner } from "@/components/upgrade-banner";
 import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
+import { SatisfactionPrompt } from "@/components/satisfaction-prompt";
 import { type EventType } from "@/db/schema";
 import { getUserTimezone, getDayBoundsInTimezone } from "@/lib/timezone";
 import Link from "next/link";
@@ -82,8 +83,9 @@ export default async function HomePage() {
 
       {/* Content */}
       <div className="max-w-lg mx-auto px-5 -mt-4 space-y-6 pb-6">
-        {/* PWA install prompt */}
+        {/* Prompts */}
         <PwaInstallPrompt />
+        <SatisfactionPrompt />
 
         {/* Upgrade banner */}
         <UpgradeBanner
@@ -99,7 +101,10 @@ export default async function HomePage() {
         {/* Quick log */}
         <section>
           <h2 className="wuf-section-title mb-4">Quick Log</h2>
-          <QuickLogButtons canWrite={user.canWrite} />
+          <QuickLogButtons
+            canWrite={user.canWrite}
+            customEvents={user.profile.customEvents as import("@/db/schema").CustomEventType[] | undefined}
+          />
         </section>
 
         {/* Today's counts */}

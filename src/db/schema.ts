@@ -131,6 +131,13 @@ export interface PuppyMember {
 
 export type SubscriptionStatus = "trialing" | "active" | "expired" | "cancelled";
 
+export interface CustomEventType {
+  id: string;
+  label: string;
+  emoji: string;
+  bg: string;
+}
+
 export interface PuppyDoc {
   name: string;
   inviteCode: string;
@@ -163,6 +170,8 @@ export interface PuppyProfile {
   insuranceProvider: string | null;
   insurancePolicyNumber: string | null;
   notes: string | null;
+  /** Custom event types defined by this puppy's owner */
+  customEvents?: CustomEventType[];
 }
 
 export type TrickStatus = "learning" | "learned" | "mastered";
