@@ -4,7 +4,7 @@ test.describe("Landing page", () => {
   test("shows hero headline and CTA", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator("h1")).toContainText("Your puppy");
-    await expect(page.locator("text=Start for free")).toBeVisible();
+    await expect(page.locator("text=Start for free").first()).toBeVisible();
   });
 
   test("shows feature cards", async ({ page }) => {
@@ -20,9 +20,14 @@ test.describe("Landing page", () => {
     await expect(cta).toHaveAttribute("href", "/login");
   });
 
-  test("does not show bottom navigation", async ({ page }) => {
+  test("does not show app bottom navigation", async ({ page }) => {
     await page.goto("/");
-    // Bottom nav should not be visible on landing
-    await expect(page.locator("text=Home").first()).not.toBeVisible();
+    // The app's bottom nav has a "More" button. Landing page should not have it.
+    await expect(page.getByRole("button", { name: "More" })).not.toBeVisible();
+  });
+
+  test("shows pricing section", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("text=$3/month")).toBeVisible();
   });
 });
