@@ -13,7 +13,11 @@ export default async function HistoryPage() {
         <h1 className="text-2xl font-bold text-stone-800">📋 History</h1>
         <p className="text-sm text-stone-500">All of {user.puppyName}&apos;s logged events</p>
       </div>
-      <HistoryList initialEvents={events} canWrite={user.canWrite} />
+      <HistoryList
+        initialEvents={events}
+        canWrite={user.canWrite}
+        customEvents={user.profile.customEvents}
+      />
     </div>
   );
 }

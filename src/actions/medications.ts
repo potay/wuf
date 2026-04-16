@@ -4,19 +4,24 @@ import { type Medication } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
 import { requireWriteAccess, getUserCollection } from "@/lib/session";
 
-function docToMedication(doc: FirebaseFirestore.DocumentSnapshot): Medication {
-  const data = doc.data()!;
+function docToMedication(doc: FirebaseFirestore.DocumentSnapshot): Medication | null {
+  const data = doc.data();
+  if (!data) return null;
   return {
     id: doc.id,
-    name: data.name,
-    dosage: data.dosage,
-    frequency: data.frequency,
-    startDate: (data.startDate as Timestamp).toDate(),
-    endDate: data.endDate ? (data.endDate as Timestamp).toDate() : null,
+    name: data.name || "",
+    dosage: data.dosage || "",
+    frequency: data.frequency || "",
+    startDate: data.startDate?.toDate?.() ?? new Date(0),
+    endDate: data.endDate?.toDate?.() ?? null,
     active: data.active ?? true,
     notes: data.notes || null,
-    createdAt: (data.createdAt as Timestamp).toDate(),
+    createdAt: data.createdAt?.toDate?.() ?? new Date(0),
   };
+}
+
+function mapMedications(docs: FirebaseFirestore.DocumentSnapshot[]): Medication[] {
+  return docs.map(docToMedication).filter((m): m is Medication => m !== null);
 }
 
 export async function addMedication(data: {
@@ -60,5 +65,5 @@ export async function deleteMedication(id: string) {
 export async function getAllMedications(): Promise<Medication[]> {
   const col = await getUserCollection("medications");
   const snapshot = await col.orderBy("createdAt", "desc").get();
-  return snapshot.docs.map(docToMedication);
+  return mapMedications(snapshot.docs);
 }

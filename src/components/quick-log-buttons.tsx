@@ -26,26 +26,41 @@ export function QuickLogButtons({ canWrite = true, customEvents }: QuickLogButto
   const [offsetMinutes, setOffsetMinutes] = useState(0);
   const [lastLogged, setLastLogged] = useState<string | null>(null);
   const [showEditor, setShowEditor] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const eventTypes = getQuickLogTypes(customEvents);
 
   function handleLog(typeId: string, label: string) {
     if (!canWrite) return;
+    setError(null);
     const offset = offsetMinutes;
     startTransition(async () => {
-      const occurredAt = offset > 0
-        ? new Date(Date.now() - offset * 60_000)
-        : undefined;
-      await logEvent(typeId, undefined, undefined, occurredAt);
-      setLastLogged(`${label}${offset > 0 ? ` (${offset}m ago)` : ""}`);
-      setOffsetMinutes(0);
-      setTimeout(() => setLastLogged(null), 2000);
-      router.refresh();
+      try {
+        const occurredAt = offset > 0
+          ? new Date(Date.now() - offset * 60_000)
+          : undefined;
+        await logEvent(typeId, undefined, undefined, occurredAt);
+        setLastLogged(`${label}${offset > 0 ? ` (${offset}m ago)` : ""}`);
+        setOffsetMinutes(0);
+        setTimeout(() => setLastLogged(null), 2000);
+        router.refresh();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to log event");
+      }
     });
   }
 
   return (
     <div className="space-y-4">
+      {error && (
+        <div
+          className="text-center text-[13px] font-medium px-4 py-2 rounded-xl"
+          style={{ background: "#FEE2E2", color: "#991B1B" }}
+          onClick={() => setError(null)}
+        >
+          {error}
+        </div>
+      )}
       {lastLogged && (
         <div className="text-center text-[14px] font-bold" style={{ color: "var(--ok)" }}>
           Logged {lastLogged} ✓

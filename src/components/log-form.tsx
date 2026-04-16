@@ -20,25 +20,31 @@ export function LogForm() {
   const [foodAmount, setFoodAmount] = useState("");
   const [foodUnit, setFoodUnit] = useState("cups");
   const [foodFinished, setFoodFinished] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const isMeal = selectedType === "meal";
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setError(null);
     const metadata = isMeal && foodName
       ? JSON.stringify({ food: foodName, amount: foodAmount, unit: foodUnit, finished: foodFinished })
       : undefined;
     startTransition(async () => {
-      await logEvent(
-        selectedType,
-        notes || undefined,
-        metadata,
-        customTime ? new Date(occurredAt) : undefined
-      );
-      setNotes("");
-      setSubmitted(true);
-      setTimeout(() => setSubmitted(false), 2000);
-      router.refresh();
+      try {
+        await logEvent(
+          selectedType,
+          notes || undefined,
+          metadata,
+          customTime ? new Date(occurredAt) : undefined
+        );
+        setNotes("");
+        setSubmitted(true);
+        setTimeout(() => setSubmitted(false), 2000);
+        router.refresh();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to log event");
+      }
     });
   }
 
@@ -165,6 +171,17 @@ export function LogForm() {
           />
         )}
       </div>
+
+      {/* Error */}
+      {error && (
+        <div
+          className="text-[13px] font-medium px-4 py-2 rounded-xl text-center"
+          style={{ background: "#FEE2E2", color: "#991B1B" }}
+          onClick={() => setError(null)}
+        >
+          {error}
+        </div>
+      )}
 
       {/* Submit */}
       <button

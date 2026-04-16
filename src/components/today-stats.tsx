@@ -1,7 +1,7 @@
 import { EVENT_TYPE_CONFIG, type EventType } from "@/db/schema";
 
 interface TodayStatsProps {
-  stats: Partial<Record<EventType, number>>;
+  stats: Record<string, number>;
 }
 
 const TRACKED_STATS: EventType[] = ["pee", "poop", "meal", "water", "walk", "treat"];

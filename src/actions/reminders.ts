@@ -5,18 +5,23 @@ import { Timestamp } from "firebase-admin/firestore";
 import type { ReminderCategory } from "@/lib/reminder-categories";
 import { requireWriteAccess, getUserCollection } from "@/lib/session";
 
-function docToReminder(doc: FirebaseFirestore.DocumentSnapshot): Reminder {
-  const data = doc.data()!;
+function docToReminder(doc: FirebaseFirestore.DocumentSnapshot): Reminder | null {
+  const data = doc.data();
+  if (!data) return null;
   return {
     id: doc.id,
-    title: data.title,
+    title: data.title || "",
     notes: data.notes || null,
-    category: data.category,
-    dueAt: (data.dueAt as Timestamp).toDate(),
+    category: data.category || "",
+    dueAt: data.dueAt?.toDate?.() ?? new Date(0),
     repeatInterval: data.repeatInterval || null,
-    completedAt: data.completedAt ? (data.completedAt as Timestamp).toDate() : null,
-    createdAt: (data.createdAt as Timestamp).toDate(),
+    completedAt: data.completedAt?.toDate?.() ?? null,
+    createdAt: data.createdAt?.toDate?.() ?? new Date(0),
   };
+}
+
+function mapReminders(docs: FirebaseFirestore.DocumentSnapshot[]): Reminder[] {
+  return docs.map(docToReminder).filter((r): r is Reminder => r !== null);
 }
 
 export async function createReminder(data: {
@@ -73,7 +78,7 @@ export async function getUpcomingReminders(limit: number = 20): Promise<Reminder
     .limit(limit)
     .get();
 
-  return snapshot.docs.map(docToReminder);
+  return mapReminders(snapshot.docs);
 }
 
 export async function getOverdueReminders(): Promise<Reminder[]> {
@@ -85,7 +90,7 @@ export async function getOverdueReminders(): Promise<Reminder[]> {
     .orderBy("dueAt", "asc")
     .get();
 
-  return snapshot.docs.map(docToReminder);
+  return mapReminders(snapshot.docs);
 }
 
 export async function getAllReminders(): Promise<Reminder[]> {
@@ -94,7 +99,7 @@ export async function getAllReminders(): Promise<Reminder[]> {
     .orderBy("createdAt", "desc")
     .get();
 
-  return snapshot.docs.map(docToReminder);
+  return mapReminders(snapshot.docs);
 }
 
 export async function getRemindersByCategory(category: ReminderCategory): Promise<Reminder[]> {
@@ -104,5 +109,5 @@ export async function getRemindersByCategory(category: ReminderCategory): Promis
     .orderBy("dueAt", "asc")
     .get();
 
-  return snapshot.docs.map(docToReminder);
+  return mapReminders(snapshot.docs);
 }

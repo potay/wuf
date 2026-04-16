@@ -103,7 +103,7 @@ export default async function HomePage() {
           <h2 className="wuf-section-title mb-4">Quick Log</h2>
           <QuickLogButtons
             canWrite={user.canWrite}
-            customEvents={user.profile.customEvents as import("@/db/schema").CustomEventType[] | undefined}
+            customEvents={user.profile.customEvents}
           />
         </section>
 
@@ -151,7 +151,10 @@ export default async function HomePage() {
               See all
             </Link>
           </div>
-          <ActivityFeed events={todayEvents.slice(0, 8)} />
+          <ActivityFeed
+            events={todayEvents.slice(0, 8)}
+            customEvents={user.profile.customEvents}
+          />
         </section>
       </div>
     </div>

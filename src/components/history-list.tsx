@@ -3,26 +3,28 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
-  EVENT_TYPES,
-  EVENT_TYPE_CONFIG,
-  type EventType,
   type Event,
+  type CustomEventType,
 } from "@/db/schema";
+import { getEventTypes, getEventTypeConfig, UNKNOWN_EVENT_FALLBACK } from "@/lib/event-types";
 import { deleteEvent, updateEventTime, updateEventNotes } from "@/actions/events";
 import { formatTime, formatDate, formatDateForInput } from "@/lib/utils";
 
 interface HistoryListProps {
   initialEvents: Event[];
   canWrite?: boolean;
+  customEvents?: CustomEventType[];
 }
 
-export function HistoryList({ initialEvents, canWrite = true }: HistoryListProps) {
+export function HistoryList({ initialEvents, canWrite = true, customEvents }: HistoryListProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [filter, setFilter] = useState<EventType | "all">("all");
+  const [filter, setFilter] = useState<string>("all");
+  const allEventTypes = getEventTypes(customEvents);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTime, setEditTime] = useState("");
   const [editNotes, setEditNotes] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const filteredEvents =
     filter === "all"
@@ -45,27 +47,46 @@ export function HistoryList({ initialEvents, canWrite = true }: HistoryListProps
   }
 
   function handleSave(id: string) {
+    setError(null);
     startTransition(async () => {
-      await updateEventTime(id, new Date(editTime));
-      const original = initialEvents.find((e) => e.id === id);
-      if ((original?.notes || "") !== editNotes) {
-        await updateEventNotes(id, editNotes);
+      try {
+        await updateEventTime(id, new Date(editTime));
+        const original = initialEvents.find((e) => e.id === id);
+        if ((original?.notes || "") !== editNotes) {
+          await updateEventNotes(id, editNotes);
+        }
+        setEditingId(null);
+        router.refresh();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to save changes");
       }
-      setEditingId(null);
-      router.refresh();
     });
   }
 
   function handleDelete(id: string) {
     if (!confirm("Delete this event?")) return;
+    setError(null);
     startTransition(async () => {
-      await deleteEvent(id);
-      router.refresh();
+      try {
+        await deleteEvent(id);
+        router.refresh();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to delete event");
+      }
     });
   }
 
   return (
     <div className="space-y-4">
+      {error && (
+        <div
+          className="text-[13px] font-medium px-4 py-2 rounded-xl text-center"
+          style={{ background: "#FEE2E2", color: "#991B1B" }}
+          onClick={() => setError(null)}
+        >
+          {error}
+        </div>
+      )}
       {/* Filter */}
       <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
         <button
@@ -78,22 +99,19 @@ export function HistoryList({ initialEvents, canWrite = true }: HistoryListProps
         >
           All
         </button>
-        {EVENT_TYPES.map((type) => {
-          const config = EVENT_TYPE_CONFIG[type];
-          return (
-            <button
-              key={type}
-              onClick={() => setFilter(type)}
-              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                filter === type
-                  ? "bg-amber-500 text-white"
-                  : "bg-stone-100 text-stone-600 hover:bg-stone-200"
-              }`}
-            >
-              {config.emoji} {config.label}
-            </button>
-          );
-        })}
+        {allEventTypes.map((type) => (
+          <button
+            key={type.id}
+            onClick={() => setFilter(type.id)}
+            className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              filter === type.id
+                ? "bg-amber-500 text-white"
+                : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+            }`}
+          >
+            {type.emoji} {type.label}
+          </button>
+        ))}
       </div>
 
       {/* Events grouped by date */}
@@ -110,8 +128,7 @@ export function HistoryList({ initialEvents, canWrite = true }: HistoryListProps
             </h3>
             <div className="space-y-2">
               {dayEvents.map((event) => {
-                const config = EVENT_TYPE_CONFIG[event.type as EventType];
-                if (!config) return null;
+                const config = getEventTypeConfig(event.type, customEvents) ?? UNKNOWN_EVENT_FALLBACK;
                 const isEditing = editingId === event.id;
 
                 if (isEditing) {

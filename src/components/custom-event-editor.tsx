@@ -24,21 +24,28 @@ export function CustomEventEditor({ onClose }: CustomEventEditorProps) {
   const [name, setName] = useState("");
   const [emoji, setEmoji] = useState("🛁");
   const [color, setColor] = useState("#BAE6FD");
+  const [error, setError] = useState<string | null>(null);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
+    setError(null);
 
     const id = name.trim().toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
 
     startTransition(async () => {
-      await fetch("/api/custom-events", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, label: name.trim(), emoji, bg: color }),
-      });
-      router.refresh();
-      onClose();
+      try {
+        const res = await fetch("/api/custom-events", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, label: name.trim(), emoji, bg: color }),
+        });
+        if (!res.ok) throw new Error("Failed to save custom event");
+        router.refresh();
+        onClose();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Something went wrong");
+      }
     });
   }
 
@@ -122,6 +129,15 @@ export function CustomEventEditor({ onClose }: CustomEventEditorProps) {
               {name || "Preview"}
             </span>
           </div>
+
+          {error && (
+            <div
+              className="text-[13px] font-medium px-4 py-2 rounded-xl text-center"
+              style={{ background: "#FEE2E2", color: "#991B1B" }}
+            >
+              {error}
+            </div>
+          )}
 
           <button
             type="submit"

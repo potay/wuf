@@ -1,5 +1,7 @@
 import { EVENT_TYPE_CONFIG, type EventType, type CustomEventType } from "@/db/schema";
 
+export const UNKNOWN_EVENT_FALLBACK = { label: "Event", emoji: "?", bg: "#F3F4F6" };
+
 export interface EventTypeInfo {
   id: string;
   label: string;

@@ -49,7 +49,7 @@ export const EVENT_TYPE_CONFIG: Record<
 
 export interface Event {
   id: string;
-  type: EventType;
+  type: string;
   notes: string | null;
   metadata: string | null;
   occurredAt: Date;

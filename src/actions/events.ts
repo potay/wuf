@@ -4,16 +4,21 @@ import { EVENT_TYPES, type EventType, type Event } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
 import { requireWriteAccess, getUserCollection } from "@/lib/session";
 
-function docToEvent(doc: FirebaseFirestore.DocumentSnapshot): Event {
-  const data = doc.data()!;
+function docToEvent(doc: FirebaseFirestore.DocumentSnapshot): Event | null {
+  const data = doc.data();
+  if (!data) return null;
   return {
     id: doc.id,
-    type: data.type as EventType,
+    type: data.type || "note",
     notes: data.notes || null,
     metadata: data.metadata || null,
-    occurredAt: (data.occurredAt as Timestamp).toDate(),
-    createdAt: (data.createdAt as Timestamp).toDate(),
+    occurredAt: data.occurredAt?.toDate?.() ?? new Date(0),
+    createdAt: data.createdAt?.toDate?.() ?? new Date(0),
   };
+}
+
+function mapEvents(docs: FirebaseFirestore.DocumentSnapshot[]): Event[] {
+  return docs.map(docToEvent).filter((e): e is Event => e !== null);
 }
 
 export async function logEvent(
@@ -67,13 +72,13 @@ export async function getEventsForDay(start: Date, end: Date): Promise<Event[]> 
     .where("occurredAt", "<=", Timestamp.fromDate(end))
     .orderBy("occurredAt", "desc")
     .get();
-  return snapshot.docs.map(docToEvent);
+  return mapEvents(snapshot.docs);
 }
 
 export async function getRecentEvents(limit: number = 20): Promise<Event[]> {
   const col = await getUserCollection("events");
   const snapshot = await col.orderBy("occurredAt", "desc").limit(limit).get();
-  return snapshot.docs.map(docToEvent);
+  return mapEvents(snapshot.docs);
 }
 
 export async function getEventsByType(type: EventType, limit: number = 50): Promise<Event[]> {
@@ -83,7 +88,7 @@ export async function getEventsByType(type: EventType, limit: number = 50): Prom
     .orderBy("occurredAt", "desc")
     .limit(limit)
     .get();
-  return snapshot.docs.map(docToEvent);
+  return mapEvents(snapshot.docs);
 }
 
 export async function getLastEventOfType(type: EventType): Promise<Event | null> {
@@ -94,7 +99,7 @@ export async function getLastEventOfType(type: EventType): Promise<Event | null>
     .limit(1)
     .get();
   if (snapshot.empty) return null;
-  return docToEvent(snapshot.docs[0]);
+  return docToEvent(snapshot.docs[0]) ?? null;
 }
 
 export async function getCrateStatus() {
@@ -121,12 +126,12 @@ export async function getCrateStatus() {
 export async function getAllEvents(limit: number = 100): Promise<Event[]> {
   const col = await getUserCollection("events");
   const snapshot = await col.orderBy("occurredAt", "desc").limit(limit).get();
-  return snapshot.docs.map(docToEvent);
+  return mapEvents(snapshot.docs);
 }
 
-export async function getTodayStats(start: Date, end: Date): Promise<Partial<Record<EventType, number>>> {
+export async function getTodayStats(start: Date, end: Date): Promise<Record<string, number>> {
   const todayEvents = await getEventsForDay(start, end);
-  const counts: Partial<Record<EventType, number>> = {};
+  const counts: Record<string, number> = {};
   for (const event of todayEvents) {
     counts[event.type] = (counts[event.type] || 0) + 1;
   }

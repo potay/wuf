@@ -4,16 +4,21 @@ import { type Trick, type TrickStatus } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
 import { requireWriteAccess, getUserCollection } from "@/lib/session";
 
-function docToTrick(doc: FirebaseFirestore.DocumentSnapshot): Trick {
-  const data = doc.data()!;
+function docToTrick(doc: FirebaseFirestore.DocumentSnapshot): Trick | null {
+  const data = doc.data();
+  if (!data) return null;
   return {
     id: doc.id,
-    name: data.name,
-    status: data.status as TrickStatus,
-    startedAt: (data.startedAt as Timestamp).toDate(),
-    masteredAt: data.masteredAt ? (data.masteredAt as Timestamp).toDate() : null,
+    name: data.name || "",
+    status: (data.status as TrickStatus) || "learning",
+    startedAt: data.startedAt?.toDate?.() ?? new Date(0),
+    masteredAt: data.masteredAt?.toDate?.() ?? null,
     notes: data.notes || null,
   };
+}
+
+function mapTricks(docs: FirebaseFirestore.DocumentSnapshot[]): Trick[] {
+  return docs.map(docToTrick).filter((t): t is Trick => t !== null);
 }
 
 export async function addTrick(data: { name: string; notes?: string }) {
@@ -53,5 +58,5 @@ export async function deleteTrick(id: string) {
 export async function getAllTricks(): Promise<Trick[]> {
   const col = await getUserCollection("tricks");
   const snapshot = await col.orderBy("startedAt", "desc").get();
-  return snapshot.docs.map(docToTrick);
+  return mapTricks(snapshot.docs);
 }

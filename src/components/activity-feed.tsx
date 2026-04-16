@@ -1,12 +1,14 @@
-import { EVENT_TYPE_CONFIG, type EventType, type Event } from "@/db/schema";
+import { type Event, type CustomEventType } from "@/db/schema";
+import { getEventTypeConfig, UNKNOWN_EVENT_FALLBACK } from "@/lib/event-types";
 import { LocalTime } from "@/components/local-time";
 
 interface ActivityFeedProps {
   events: Event[];
   showDate?: boolean;
+  customEvents?: CustomEventType[];
 }
 
-export function ActivityFeed({ events, showDate = false }: ActivityFeedProps) {
+export function ActivityFeed({ events, showDate = false, customEvents }: ActivityFeedProps) {
   if (events.length === 0) {
     return (
       <div className="wuf-card p-8 text-center text-[var(--fg-3)]">
@@ -19,8 +21,7 @@ export function ActivityFeed({ events, showDate = false }: ActivityFeedProps) {
   return (
     <div className="wuf-card overflow-hidden">
       {events.map((event, i) => {
-        const config = EVENT_TYPE_CONFIG[event.type as EventType];
-        if (!config) return null;
+        const config = getEventTypeConfig(event.type, customEvents) ?? UNKNOWN_EVENT_FALLBACK;
         return (
           <div
             key={event.id}

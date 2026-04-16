@@ -4,21 +4,26 @@ import { type SocializationItem } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
 import { requireWriteAccess, getUserCollection } from "@/lib/session";
 
-function docToItem(doc: FirebaseFirestore.DocumentSnapshot): SocializationItem {
-  const data = doc.data()!;
+function docToItem(doc: FirebaseFirestore.DocumentSnapshot): SocializationItem | null {
+  const data = doc.data();
+  if (!data) return null;
   return {
     id: doc.id,
-    category: data.category,
-    label: data.label,
-    completedAt: data.completedAt ? (data.completedAt as Timestamp).toDate() : null,
+    category: data.category || "",
+    label: data.label || "",
+    completedAt: data.completedAt?.toDate?.() ?? null,
     notes: data.notes || null,
   };
+}
+
+function mapItems(docs: FirebaseFirestore.DocumentSnapshot[]): SocializationItem[] {
+  return docs.map(docToItem).filter((i): i is SocializationItem => i !== null);
 }
 
 export async function getAllSocializationItems(): Promise<SocializationItem[]> {
   const col = await getUserCollection("socializations");
   const snapshot = await col.orderBy("category").get();
-  return snapshot.docs.map(docToItem);
+  return mapItems(snapshot.docs);
 }
 
 export async function toggleSocializationItem(id: string, completed: boolean) {

@@ -48,7 +48,7 @@ const db = getFirestore();
 
 const dryRun = process.argv.includes("--dry-run");
 
-async function deleteCollection(ref: FirebaseFirestore.CollectionReference) {
+async function deleteCollection(ref: FirebaseFirestore.CollectionReference): Promise<number> {
   const snapshot = await ref.limit(500).get();
   if (snapshot.empty) return 0;
 

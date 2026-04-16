@@ -4,17 +4,22 @@ import { type Milestone, type MilestoneMedia } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
 import { requireWriteAccess, getUserCollection } from "@/lib/session";
 
-function docToMilestone(doc: FirebaseFirestore.DocumentSnapshot): Milestone {
-  const data = doc.data()!;
+function docToMilestone(doc: FirebaseFirestore.DocumentSnapshot): Milestone | null {
+  const data = doc.data();
+  if (!data) return null;
   return {
     id: doc.id,
-    title: data.title,
+    title: data.title || "",
     notes: data.notes || null,
     photoUrl: data.photoUrl || null,
     media: data.media || [],
-    occurredAt: (data.occurredAt as Timestamp).toDate(),
-    createdAt: (data.createdAt as Timestamp).toDate(),
+    occurredAt: data.occurredAt?.toDate?.() ?? new Date(0),
+    createdAt: data.createdAt?.toDate?.() ?? new Date(0),
   };
+}
+
+function mapMilestones(docs: FirebaseFirestore.DocumentSnapshot[]): Milestone[] {
+  return docs.map(docToMilestone).filter((m): m is Milestone => m !== null);
 }
 
 export async function createMilestone(data: {
@@ -50,5 +55,5 @@ export async function getAllMilestones(): Promise<Milestone[]> {
   const snapshot = await col
     .orderBy("occurredAt", "desc")
     .get();
-  return snapshot.docs.map(docToMilestone);
+  return mapMilestones(snapshot.docs);
 }
