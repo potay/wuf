@@ -10,18 +10,9 @@ import { computeSubscriptionState } from "@/lib/subscription";
 
 const SESSION_COOKIE_NAME = "__session";
 const SESSION_EXPIRY_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
-const ALLOWED_EMAILS = (process.env.ALLOWED_EMAILS || process.env.ALLOWED_EMAIL || "")
-  .split("|")
-  .map((e) => e.trim().toLowerCase())
-  .filter(Boolean);
-
 export async function createSession(idToken: string) {
   const auth = getAuth();
   const decoded = await auth.verifyIdToken(idToken);
-
-  if (ALLOWED_EMAILS.length > 0 && !ALLOWED_EMAILS.includes(decoded.email?.toLowerCase() || "")) {
-    throw new Error("Unauthorized: this account is not allowed.");
-  }
 
   const sessionCookie = await auth.createSessionCookie(idToken, {
     expiresIn: SESSION_EXPIRY_MS,
@@ -50,11 +41,6 @@ export const verifySession = cache(async () => {
   try {
     const auth = getAuth();
     const decoded = await auth.verifySessionCookie(sessionCookie, true);
-
-    if (ALLOWED_EMAILS.length > 0 && !ALLOWED_EMAILS.includes(decoded.email?.toLowerCase() || "")) {
-      redirect("/login");
-    }
-
     return decoded;
   } catch {
     redirect("/login");

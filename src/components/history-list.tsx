@@ -121,7 +121,10 @@ export function HistoryList({ initialEvents, canWrite = true }: HistoryListProps
                       className="p-3 bg-amber-50 rounded-xl border border-amber-200 space-y-2"
                     >
                       <div className="flex items-center gap-2">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${config.color}`}>
+                        <div
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-sm"
+                          style={{ background: config.bg }}
+                        >
                           {config.emoji}
                         </div>
                         <span className="text-sm font-medium text-stone-800">{config.label}</span>
@@ -166,7 +169,8 @@ export function HistoryList({ initialEvents, canWrite = true }: HistoryListProps
                     className="flex items-center gap-3 p-3 bg-white rounded-xl border border-stone-100"
                   >
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${config.color}`}
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-lg"
+                      style={{ background: config.bg }}
                     >
                       {config.emoji}
                     </div>

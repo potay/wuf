@@ -24,45 +24,28 @@ export type EventType = (typeof EVENT_TYPES)[number];
 
 export const EVENT_TYPE_CONFIG: Record<
   EventType,
-  { label: string; emoji: string; color: string; bg: string }
+  { label: string; emoji: string; bg: string }
 > = {
-  pee: { label: "Pee", emoji: "💧", color: "bg-yellow-100 text-yellow-800", bg: "#FEF9C3" },
-  poop: { label: "Poop", emoji: "💩", color: "bg-amber-100 text-amber-800", bg: "#FDEBC8" },
-  accident: { label: "Accident", emoji: "🚨", color: "bg-red-100 text-red-800", bg: "#FEE2E2" },
-  meal: { label: "Meal", emoji: "🍖", color: "bg-orange-100 text-orange-800", bg: "#FFEDD5" },
-  water: { label: "Water", emoji: "💦", color: "bg-blue-100 text-blue-800", bg: "#DBEAFE" },
-  crate_in: { label: "Crate In", emoji: "🏠", color: "bg-purple-100 text-purple-800", bg: "#EDE9FE" },
-  crate_out: { label: "Crate Out", emoji: "🐕", color: "bg-green-100 text-green-800", bg: "#DCFCE7" },
-  walk: { label: "Walk", emoji: "🦮", color: "bg-emerald-100 text-emerald-800", bg: "#D1FAE5" },
-  play: { label: "Play", emoji: "🎾", color: "bg-pink-100 text-pink-800", bg: "#FCE7F3" },
-  treat: { label: "Treat", emoji: "🦴", color: "bg-amber-100 text-amber-800", bg: "#FEF3C7" },
-  medicine: { label: "Medicine", emoji: "💊", color: "bg-red-100 text-red-800", bg: "#FFE4E6" },
-  vaccination: { label: "Vaccination", emoji: "💉", color: "bg-indigo-100 text-indigo-800", bg: "#E0E7FF" },
-  vet_visit: { label: "Vet Visit", emoji: "🏥", color: "bg-teal-100 text-teal-800", bg: "#CCFBF1" },
-  weight: { label: "Weight", emoji: "⚖️", color: "bg-slate-100 text-slate-800", bg: "#F1F5F9" },
-  train: { label: "Train", emoji: "🎓", color: "bg-violet-100 text-violet-800", bg: "#EDE9FE" },
-  sleep: { label: "Sleep", emoji: "😴", color: "bg-indigo-100 text-indigo-800", bg: "#E0E7FF" },
-  wake: { label: "Wake Up", emoji: "☀️", color: "bg-yellow-100 text-yellow-800", bg: "#FEF9C3" },
-  note: { label: "Note", emoji: "📝", color: "bg-gray-100 text-gray-800", bg: "#F3F4F6" },
+  pee: { label: "Pee", emoji: "💧", bg: "#FEF9C3" },
+  poop: { label: "Poop", emoji: "💩", bg: "#FDEBC8" },
+  accident: { label: "Accident", emoji: "🚨", bg: "#FEE2E2" },
+  meal: { label: "Meal", emoji: "🍖", bg: "#FFEDD5" },
+  water: { label: "Water", emoji: "💦", bg: "#DBEAFE" },
+  crate_in: { label: "Crate In", emoji: "🏠", bg: "#EDE9FE" },
+  crate_out: { label: "Crate Out", emoji: "🐕", bg: "#DCFCE7" },
+  walk: { label: "Walk", emoji: "🦮", bg: "#D1FAE5" },
+  play: { label: "Play", emoji: "🎾", bg: "#FCE7F3" },
+  treat: { label: "Treat", emoji: "🦴", bg: "#FEF3C7" },
+  medicine: { label: "Medicine", emoji: "💊", bg: "#FFE4E6" },
+  vaccination: { label: "Vaccination", emoji: "💉", bg: "#E0E7FF" },
+  vet_visit: { label: "Vet Visit", emoji: "🏥", bg: "#CCFBF1" },
+  weight: { label: "Weight", emoji: "⚖️", bg: "#F1F5F9" },
+  train: { label: "Train", emoji: "🎓", bg: "#EDE9FE" },
+  sleep: { label: "Sleep", emoji: "😴", bg: "#E0E7FF" },
+  wake: { label: "Wake Up", emoji: "☀️", bg: "#FEF9C3" },
+  note: { label: "Note", emoji: "📝", bg: "#F3F4F6" },
 };
 
-// Quick-log buttons shown on dashboard (subset of all types)
-export const QUICK_LOG_TYPES: EventType[] = [
-  "pee",
-  "poop",
-  "accident",
-  "meal",
-  "water",
-  "crate_in",
-  "crate_out",
-  "walk",
-  "play",
-  "treat",
-  "train",
-  "sleep",
-  "wake",
-  "note",
-];
 
 export interface Event {
   id: string;
