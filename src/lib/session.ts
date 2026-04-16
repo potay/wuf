@@ -81,20 +81,15 @@ export const getCurrentUser = cache(async () => {
   const puppyData = puppyDoc.data() || {};
 
   // Determine write access based on trial/subscription status
-  // Grandfathered puppies (no trialEndsAt) get full access
-  const hasSubscriptionFields = !!puppyData.trialEndsAt;
   const subscriptionStatus = (puppyData.subscriptionStatus as SubscriptionStatus) || "trialing";
   const trialEndsAt = puppyData.trialEndsAt?.toDate?.()?.getTime?.() || 0;
   const now = Date.now();
 
-  // trialDaysLeft: 0 means expired (even if a few hours remain today)
   const trialDaysLeft = trialEndsAt > 0
     ? Math.max(0, Math.ceil((trialEndsAt - now) / (24 * 60 * 60 * 1000)))
     : 0;
 
-  // canWrite must agree with trialDaysLeft: if 0 days left, no write access
-  const canWrite = !hasSubscriptionFields // grandfathered (pre-subscription puppies)
-    || subscriptionStatus === "active"
+  const canWrite = subscriptionStatus === "active"
     || (subscriptionStatus === "trialing" && trialDaysLeft > 0);
 
   return {
