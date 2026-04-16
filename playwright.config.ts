@@ -5,7 +5,7 @@ export default defineConfig({
   fullyParallel: true,
   retries: 1,
   use: {
-    baseURL: process.env.E2E_BASE_URL || "https://wuf-1060643788581.us-central1.run.app",
+    baseURL: process.env.E2E_BASE_URL || "https://getwuf.app",
     trace: "on-first-retry",
   },
   projects: [
