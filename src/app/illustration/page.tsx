@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/session";
 import { IllustrationEditor } from "@/components/illustration-editor";
+import { UpgradeBanner } from "@/components/upgrade-banner";
 
 export const dynamic = "force-dynamic";
 
@@ -14,11 +15,32 @@ export default async function IllustrationPage() {
           Make {user.puppyName}&apos;s illustration look just like them
         </p>
       </div>
-      <IllustrationEditor
-        currentUrl={user.profile.illustrationUrl ?? null}
-        breed={user.profile.breed || ""}
-        puppyName={user.puppyName}
-      />
+      {user.canWrite ? (
+        <IllustrationEditor
+          currentUrl={user.profile.illustrationUrl ?? null}
+          breed={user.profile.breed || ""}
+          puppyName={user.puppyName}
+        />
+      ) : (
+        <>
+          <UpgradeBanner
+            canWrite={user.canWrite}
+            subscriptionStatus={user.subscriptionStatus}
+            trialDaysLeft={user.trialDaysLeft}
+            isOwner={user.isOwner}
+          />
+          {user.profile.illustrationUrl && (
+            <div className="wuf-card p-6 flex justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={user.profile.illustrationUrl}
+                alt={user.puppyName}
+                className="w-48 h-48 object-contain"
+              />
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

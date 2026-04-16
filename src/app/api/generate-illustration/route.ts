@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStorage } from "firebase-admin/storage";
 import { db } from "@/db";
-import { verifySession, getCurrentUser } from "@/lib/session";
+import { requireWriteAccess } from "@/lib/session";
 
 const STORAGE_BUCKET = process.env.STORAGE_BUCKET || "wuf-medical-records";
 
@@ -74,8 +74,7 @@ async function fetchImageAsBase64(url: string): Promise<string | null> {
 }
 
 export async function POST(request: NextRequest) {
-  await verifySession();
-  const user = await getCurrentUser();
+  const user = await requireWriteAccess();
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -160,8 +159,7 @@ export async function POST(request: NextRequest) {
 
 /** PATCH: Set illustration to an existing URL (for reverting to a previous version) */
 export async function PATCH(request: NextRequest) {
-  await verifySession();
-  const user = await getCurrentUser();
+  const user = await requireWriteAccess();
   const { url } = await request.json();
 
   if (!url) {

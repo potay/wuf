@@ -63,6 +63,7 @@ export default async function HomePage() {
               breed={user.profile.breed || ""}
               puppyName={user.puppyName}
               className="w-24 h-24 -mb-1"
+              canWrite={user.canWrite}
             />
             <div className="flex-1 pb-2">
               <div className="flex items-start justify-between">

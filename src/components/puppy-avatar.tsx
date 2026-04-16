@@ -7,6 +7,7 @@ interface PuppyAvatarProps {
   breed: string;
   puppyName: string;
   className?: string;
+  canWrite?: boolean;
 }
 
 type State = { url: string | null; loading: boolean };
@@ -22,7 +23,7 @@ function reducer(state: State, action: Action): State {
 // Module-level flag to prevent duplicate generation across re-mounts
 let generationInProgress = false;
 
-export function PuppyAvatar({ illustrationUrl, breed, puppyName, className = "w-24 h-24" }: PuppyAvatarProps) {
+export function PuppyAvatar({ illustrationUrl, breed, puppyName, className = "w-24 h-24", canWrite = true }: PuppyAvatarProps) {
   const [state, dispatch] = useReducer(reducer, {
     url: illustrationUrl,
     loading: false,
@@ -39,7 +40,7 @@ export function PuppyAvatar({ illustrationUrl, breed, puppyName, className = "w-
 
   // Only auto-generate once, ever, and only if no illustration exists
   useEffect(() => {
-    if (state.url || attempted.current || generationInProgress) return;
+    if (state.url || attempted.current || generationInProgress || !canWrite) return;
     attempted.current = true;
     generationInProgress = true;
 
