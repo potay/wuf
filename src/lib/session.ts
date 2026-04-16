@@ -104,7 +104,8 @@ export const getCurrentUser = cache(async () => {
     subscriptionStatus,
     trialEndsAt,
     trialDaysLeft,
-    isOwner: puppyData.createdBy === session.uid,
+    isOwner: puppyData.createdBy === session.uid
+      || (puppyData.members || []).some((m: { uid: string; role: string }) => m.uid === session.uid && m.role === "owner"),
   };
 });
 

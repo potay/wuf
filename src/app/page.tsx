@@ -94,7 +94,7 @@ export default async function HomePage() {
         {/* Quick log */}
         <section>
           <h2 className="wuf-section-title mb-4">Quick Log</h2>
-          <QuickLogButtons />
+          <QuickLogButtons canWrite={user.canWrite} />
         </section>
 
         {/* Today's counts */}

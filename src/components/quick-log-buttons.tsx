@@ -13,7 +13,7 @@ const TIME_OFFSETS = [
   { label: "30m", minutes: 30 },
 ] as const;
 
-export function QuickLogButtons() {
+export function QuickLogButtons({ canWrite = true }: { canWrite?: boolean }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [offsetMinutes, setOffsetMinutes] = useState(0);
@@ -48,8 +48,9 @@ export function QuickLogButtons() {
           return (
             <button
               key={type}
-              onClick={() => handleLog(type)}
-              className="flex flex-col items-center gap-2 active:scale-90 transition-transform"
+              onClick={() => canWrite && handleLog(type)}
+              disabled={!canWrite}
+              className={`flex flex-col items-center gap-2 transition-transform ${canWrite ? "active:scale-90" : "opacity-40"}`}
             >
               <div
                 className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
