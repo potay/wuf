@@ -7,6 +7,7 @@ import { toggleSocializationItem } from "@/actions/socialization";
 
 interface SocializationViewProps {
   items: SocializationItem[];
+  canWrite?: boolean;
 }
 
 const CATEGORY_EMOJIS: Record<string, string> = {
@@ -19,7 +20,7 @@ const CATEGORY_EMOJIS: Record<string, string> = {
   Objects: "📦",
 };
 
-export function SocializationView({ items }: SocializationViewProps) {
+export function SocializationView({ items, canWrite = true }: SocializationViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -80,7 +81,7 @@ export function SocializationView({ items }: SocializationViewProps) {
                 <button
                   key={item.id}
                   onClick={() => handleToggle(item)}
-                  disabled={isPending}
+                  disabled={isPending || !canWrite}
                   className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
                     item.completedAt
                       ? "bg-green-50 border-green-200"

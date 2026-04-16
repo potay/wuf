@@ -21,6 +21,7 @@ export default async function WeightPage() {
         breed={user.profile.breed}
         momWeightLbs={user.profile.momWeightLbs}
         dadWeightLbs={user.profile.dadWeightLbs}
+        canWrite={user.canWrite}
       />
     </div>
   );

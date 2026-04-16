@@ -15,7 +15,7 @@ export default async function SocializationPage() {
           Expose {user.puppyName} to new experiences during the critical window
         </p>
       </div>
-      <SocializationView items={items} />
+      <SocializationView items={items} canWrite={user.canWrite} />
     </div>
   );
 }

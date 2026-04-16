@@ -39,9 +39,10 @@ interface ParsedRecord {
 
 interface MedicalRecordsViewProps {
   records: MedicalRecord[];
+  canWrite?: boolean;
 }
 
-export function MedicalRecordsView({ records }: MedicalRecordsViewProps) {
+export function MedicalRecordsView({ records, canWrite = true }: MedicalRecordsViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [mode, setMode] = useState<"idle" | "smart" | "manual">("idle");
@@ -219,7 +220,7 @@ export function MedicalRecordsView({ records }: MedicalRecordsViewProps) {
   return (
     <div className="space-y-6">
       {/* Add record buttons */}
-      {!isFormOpen && !parsing && (
+      {canWrite && !isFormOpen && !parsing && (
         <div className="space-y-2">
           <label
             className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl bg-amber-500 text-white
@@ -254,7 +255,7 @@ export function MedicalRecordsView({ records }: MedicalRecordsViewProps) {
       )}
 
       {/* Form (for both smart and manual mode) */}
-      {isFormOpen && (
+      {canWrite && isFormOpen && (
         <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-stone-200 p-4 space-y-3">
           {parsed && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-xs text-green-700">
@@ -452,13 +453,15 @@ export function MedicalRecordsView({ records }: MedicalRecordsViewProps) {
                           </div>
                         )}
 
-                        <button
-                          onClick={() => handleDelete(record.id)}
-                          disabled={isPending}
-                          className="text-xs text-red-400 hover:text-red-500 disabled:opacity-50"
-                        >
-                          Delete record
-                        </button>
+                        {canWrite && (
+                          <button
+                            onClick={() => handleDelete(record.id)}
+                            disabled={isPending}
+                            className="text-xs text-red-400 hover:text-red-500 disabled:opacity-50"
+                          >
+                            Delete record
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>

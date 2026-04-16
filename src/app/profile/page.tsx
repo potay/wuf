@@ -33,7 +33,7 @@ export default async function ProfilePage() {
         </div>
       )}
 
-      <ProfileForm profile={profile} />
+      <ProfileForm profile={profile} canWrite={user.canWrite} />
     </div>
   );
 }

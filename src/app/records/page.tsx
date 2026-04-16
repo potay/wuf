@@ -1,10 +1,11 @@
 import { getAllMedicalRecords } from "@/actions/medical-records";
 import { MedicalRecordsView } from "@/components/medical-records-view";
+import { getCurrentUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function RecordsPage() {
-  const records = await getAllMedicalRecords();
+  const [records, user] = await Promise.all([getAllMedicalRecords(), getCurrentUser()]);
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
@@ -14,7 +15,7 @@ export default async function RecordsPage() {
           Vet records, vaccinations, and lab results
         </p>
       </div>
-      <MedicalRecordsView records={records} />
+      <MedicalRecordsView records={records} canWrite={user.canWrite} />
     </div>
   );
 }

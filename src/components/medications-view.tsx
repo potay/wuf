@@ -8,9 +8,10 @@ import { formatDate } from "@/lib/utils";
 
 interface MedicationsViewProps {
   medications: Medication[];
+  canWrite?: boolean;
 }
 
-export function MedicationsView({ medications }: MedicationsViewProps) {
+export function MedicationsView({ medications, canWrite = true }: MedicationsViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isAdding, setIsAdding] = useState(false);
@@ -74,26 +75,28 @@ export function MedicationsView({ medications }: MedicationsViewProps) {
               {med.notes && <div className="text-stone-400 italic">{med.notes}</div>}
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => handleToggle(med)}
-              disabled={isPending}
-              className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${
-                med.active
-                  ? "bg-stone-100 text-stone-500 hover:bg-red-50 hover:text-red-500"
-                  : "bg-green-50 text-green-600 hover:bg-green-100"
-              }`}
-            >
-              {med.active ? "Stop" : "Resume"}
-            </button>
-            <button
-              onClick={() => handleDelete(med.id)}
-              disabled={isPending}
-              className="text-stone-300 hover:text-red-400 p-1 text-xs"
-            >
-              ✕
-            </button>
-          </div>
+          {canWrite && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => handleToggle(med)}
+                disabled={isPending}
+                className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${
+                  med.active
+                    ? "bg-stone-100 text-stone-500 hover:bg-red-50 hover:text-red-500"
+                    : "bg-green-50 text-green-600 hover:bg-green-100"
+                }`}
+              >
+                {med.active ? "Stop" : "Resume"}
+              </button>
+              <button
+                onClick={() => handleDelete(med.id)}
+                disabled={isPending}
+                className="text-stone-300 hover:text-red-400 p-1 text-xs"
+              >
+                ✕
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -133,7 +136,7 @@ export function MedicationsView({ medications }: MedicationsViewProps) {
       )}
 
       {/* Add medication */}
-      {isAdding ? (
+      {canWrite && (isAdding ? (
         <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-stone-200 p-4 space-y-3">
           <input
             type="text"
@@ -197,7 +200,7 @@ export function MedicationsView({ medications }: MedicationsViewProps) {
         >
           + Add medication
         </button>
-      )}
+      ))}
     </div>
   );
 }

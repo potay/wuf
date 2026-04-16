@@ -11,6 +11,7 @@ import {
 
 interface ScheduleViewProps {
   items: ScheduleItem[];
+  canWrite?: boolean;
 }
 
 function formatTime12h(time24: string): string {
@@ -29,7 +30,7 @@ function isCurrentTimeSlot(time: string): boolean {
   return Math.abs(nowMinutes - slotMinutes) < 30;
 }
 
-export function ScheduleView({ items }: ScheduleViewProps) {
+export function ScheduleView({ items, canWrite = true }: ScheduleViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isAdding, setIsAdding] = useState(false);
@@ -100,7 +101,7 @@ export function ScheduleView({ items }: ScheduleViewProps) {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleToggle(item)}
-                      disabled={isPending}
+                      disabled={isPending || !canWrite}
                       className={`w-5 h-5 rounded border flex items-center justify-center text-xs
                         ${item.enabled ? "border-amber-400 bg-amber-400 text-white" : "border-stone-300"}`}
                     >
@@ -110,13 +111,15 @@ export function ScheduleView({ items }: ScheduleViewProps) {
                       {item.activity}
                     </span>
                   </div>
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    disabled={isPending}
-                    className="text-stone-300 hover:text-red-400 text-xs p-1"
-                  >
-                    ✕
-                  </button>
+                  {canWrite && (
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      disabled={isPending}
+                      className="text-stone-300 hover:text-red-400 text-xs p-1"
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
                 {item.notes && (
                   <div className="text-xs text-stone-400 mt-1 ml-7">
@@ -130,7 +133,7 @@ export function ScheduleView({ items }: ScheduleViewProps) {
       </div>
 
       {/* Add item */}
-      {isAdding ? (
+      {canWrite && (isAdding ? (
         <form onSubmit={handleAdd} className="bg-white rounded-xl border border-stone-200 p-4 space-y-3">
           <div className="flex gap-2">
             <input
@@ -180,7 +183,7 @@ export function ScheduleView({ items }: ScheduleViewProps) {
         >
           + Add to schedule
         </button>
-      )}
+      ))}
     </div>
   );
 }

@@ -15,7 +15,7 @@ export default async function SchedulePage() {
           {user.puppyName}&apos;s daily routine
         </p>
       </div>
-      <ScheduleView items={schedule} />
+      <ScheduleView items={schedule} canWrite={user.canWrite} />
     </div>
   );
 }

@@ -9,7 +9,11 @@ import {
 } from "@/lib/reminder-categories";
 import { formatDateForInput } from "@/lib/utils";
 
-export function ReminderForm() {
+interface ReminderFormProps {
+  canWrite?: boolean;
+}
+
+export function ReminderForm({ canWrite = true }: ReminderFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isOpen, setIsOpen] = useState(false);
@@ -39,6 +43,8 @@ export function ReminderForm() {
       router.refresh();
     });
   }
+
+  if (!canWrite) return null;
 
   if (!isOpen) {
     return (

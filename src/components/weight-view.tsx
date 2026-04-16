@@ -25,6 +25,7 @@ interface WeightViewProps {
   breed: string;
   momWeightLbs: number | null;
   dadWeightLbs: number | null;
+  canWrite?: boolean;
 }
 
 type Unit = "lbs" | "kg";
@@ -190,7 +191,7 @@ const MILESTONES = [
   { fraction: 0.95, label: "95% — full grown" },
 ] as const;
 
-export function WeightView({ events, birthday, breed, momWeightLbs, dadWeightLbs }: WeightViewProps) {
+export function WeightView({ events, birthday, breed, momWeightLbs, dadWeightLbs, canWrite = true }: WeightViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [weight, setWeight] = useState("");
@@ -314,49 +315,51 @@ export function WeightView({ events, birthday, breed, momWeightLbs, dadWeightLbs
   return (
     <div className="space-y-6">
       {/* Log weight form */}
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        <div className="flex-1 relative">
-          <input
-            type="number"
-            step="0.1"
-            min="0"
-            value={weight}
-            onChange={(e) => setWeight(e.target.value)}
-            placeholder="Enter weight"
-            className="w-full p-3 pr-20 rounded-xl border border-stone-200 bg-white text-sm
-              focus:outline-none focus:ring-2 focus:ring-amber-300 placeholder:text-stone-300"
-          />
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex bg-stone-100 rounded-lg p-0.5">
-            <button
-              type="button"
-              onClick={() => setInputUnit("lbs")}
-              className={`px-2 py-0.5 rounded-md text-[11px] font-semibold transition-colors ${
-                inputUnit === "lbs" ? "bg-white text-stone-800 shadow-sm" : "text-stone-400"
-              }`}
-            >
-              lbs
-            </button>
-            <button
-              type="button"
-              onClick={() => setInputUnit("kg")}
-              className={`px-2 py-0.5 rounded-md text-[11px] font-semibold transition-colors ${
-                inputUnit === "kg" ? "bg-white text-stone-800 shadow-sm" : "text-stone-400"
-              }`}
-            >
-              kg
-            </button>
+      {canWrite && (
+        <form onSubmit={handleSubmit} className="flex gap-2">
+          <div className="flex-1 relative">
+            <input
+              type="number"
+              step="0.1"
+              min="0"
+              value={weight}
+              onChange={(e) => setWeight(e.target.value)}
+              placeholder="Enter weight"
+              className="w-full p-3 pr-20 rounded-xl border border-stone-200 bg-white text-sm
+                focus:outline-none focus:ring-2 focus:ring-amber-300 placeholder:text-stone-300"
+            />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex bg-stone-100 rounded-lg p-0.5">
+              <button
+                type="button"
+                onClick={() => setInputUnit("lbs")}
+                className={`px-2 py-0.5 rounded-md text-[11px] font-semibold transition-colors ${
+                  inputUnit === "lbs" ? "bg-white text-stone-800 shadow-sm" : "text-stone-400"
+                }`}
+              >
+                lbs
+              </button>
+              <button
+                type="button"
+                onClick={() => setInputUnit("kg")}
+                className={`px-2 py-0.5 rounded-md text-[11px] font-semibold transition-colors ${
+                  inputUnit === "kg" ? "bg-white text-stone-800 shadow-sm" : "text-stone-400"
+                }`}
+              >
+                kg
+              </button>
+            </div>
           </div>
-        </div>
-        <button
-          type="submit"
-          disabled={isPending || !weight}
-          className={`px-6 rounded-xl text-white font-semibold text-sm transition-all
-            active:scale-[0.98] disabled:opacity-50
-            ${submitted ? "bg-green-500" : "bg-amber-500 hover:bg-amber-600"}`}
-        >
-          {submitted ? "✓" : isPending ? "..." : "Log"}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={isPending || !weight}
+            className={`px-6 rounded-xl text-white font-semibold text-sm transition-all
+              active:scale-[0.98] disabled:opacity-50
+              ${submitted ? "bg-green-500" : "bg-amber-500 hover:bg-amber-600"}`}
+          >
+            {submitted ? "✓" : isPending ? "..." : "Log"}
+          </button>
+        </form>
+      )}
 
       {/* Display unit toggle */}
       {actualData.length > 0 && (

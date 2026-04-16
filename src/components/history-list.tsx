@@ -13,9 +13,10 @@ import { formatTime, formatDate, formatDateForInput } from "@/lib/utils";
 
 interface HistoryListProps {
   initialEvents: Event[];
+  canWrite?: boolean;
 }
 
-export function HistoryList({ initialEvents }: HistoryListProps) {
+export function HistoryList({ initialEvents, canWrite = true }: HistoryListProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [filter, setFilter] = useState<EventType | "all">("all");
@@ -182,22 +183,26 @@ export function HistoryList({ initialEvents }: HistoryListProps) {
                     <div className="text-xs text-stone-400 text-right shrink-0">
                       {formatTime(event.occurredAt)}
                     </div>
-                    <button
-                      onClick={() => handleEdit(event)}
-                      disabled={isPending}
-                      className="text-stone-300 hover:text-amber-500 transition-colors p-1 disabled:opacity-50"
-                      aria-label="Edit event"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      onClick={() => handleDelete(event.id)}
-                      disabled={isPending}
-                      className="text-stone-300 hover:text-red-400 transition-colors p-1 disabled:opacity-50"
-                      aria-label="Delete event"
-                    >
-                      ✕
-                    </button>
+                    {canWrite && (
+                      <button
+                        onClick={() => handleEdit(event)}
+                        disabled={isPending}
+                        className="text-stone-300 hover:text-amber-500 transition-colors p-1 disabled:opacity-50"
+                        aria-label="Edit event"
+                      >
+                        ✏️
+                      </button>
+                    )}
+                    {canWrite && (
+                      <button
+                        onClick={() => handleDelete(event.id)}
+                        disabled={isPending}
+                        className="text-stone-300 hover:text-red-400 transition-colors p-1 disabled:opacity-50"
+                        aria-label="Delete event"
+                      >
+                        ✕
+                      </button>
+                    )}
                   </div>
                 );
               })}

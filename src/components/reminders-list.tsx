@@ -16,9 +16,10 @@ import { formatDateTime } from "@/lib/utils";
 
 interface RemindersListProps {
   reminders: Reminder[];
+  canWrite?: boolean;
 }
 
-export function RemindersList({ reminders }: RemindersListProps) {
+export function RemindersList({ reminders, canWrite = true }: RemindersListProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -59,7 +60,7 @@ export function RemindersList({ reminders }: RemindersListProps) {
       >
         <button
           onClick={() => handleToggle(reminder)}
-          disabled={isPending}
+          disabled={isPending || !canWrite}
           className={`mt-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
             reminder.completedAt
               ? "bg-green-500 border-green-500 text-white"
@@ -98,14 +99,16 @@ export function RemindersList({ reminders }: RemindersListProps) {
             </div>
           )}
         </div>
-        <button
-          onClick={() => handleDelete(reminder.id)}
-          disabled={isPending}
-          className="text-stone-300 hover:text-red-400 transition-colors p-1 disabled:opacity-50"
-          aria-label="Delete reminder"
-        >
-          ✕
-        </button>
+        {canWrite && (
+          <button
+            onClick={() => handleDelete(reminder.id)}
+            disabled={isPending}
+            className="text-stone-300 hover:text-red-400 transition-colors p-1 disabled:opacity-50"
+            aria-label="Delete reminder"
+          >
+            ✕
+          </button>
+        )}
       </div>
     );
   }

@@ -15,7 +15,7 @@ export default async function MedicationsPage() {
           Track {user.puppyName}&apos;s medications and supplements
         </p>
       </div>
-      <MedicationsView medications={medications} />
+      <MedicationsView medications={medications} canWrite={user.canWrite} />
     </div>
   );
 }

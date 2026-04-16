@@ -15,7 +15,7 @@ export default async function MilestonesPage() {
           {user.puppyName}&apos;s memorable moments
         </p>
       </div>
-      <MilestonesView milestones={milestones} />
+      <MilestonesView milestones={milestones} canWrite={user.canWrite} />
     </div>
   );
 }

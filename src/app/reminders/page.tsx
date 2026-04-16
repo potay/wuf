@@ -1,11 +1,12 @@
 import { getAllReminders } from "@/actions/reminders";
 import { RemindersList } from "@/components/reminders-list";
 import { ReminderForm } from "@/components/reminder-form";
+import { getCurrentUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function RemindersPage() {
-  const reminders = await getAllReminders();
+  const [reminders, user] = await Promise.all([getAllReminders(), getCurrentUser()]);
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
@@ -15,8 +16,8 @@ export default async function RemindersPage() {
           Vaccinations, vet visits, and more
         </p>
       </div>
-      <ReminderForm />
-      <RemindersList reminders={reminders} />
+      <ReminderForm canWrite={user.canWrite} />
+      <RemindersList reminders={reminders} canWrite={user.canWrite} />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { formatDate } from "@/lib/utils";
 
 interface TricksViewProps {
   tricks: Trick[];
+  canWrite?: boolean;
 }
 
 const STATUS_CONFIG: Record<TrickStatus, { label: string; emoji: string; color: string }> = {
@@ -24,7 +25,7 @@ const COMMON_TRICKS = [
   "Quiet", "Speak", "Fetch", "Go to bed",
 ];
 
-export function TricksView({ tricks }: TricksViewProps) {
+export function TricksView({ tricks, canWrite = true }: TricksViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isAdding, setIsAdding] = useState(false);
@@ -76,25 +77,27 @@ export function TricksView({ tricks }: TricksViewProps) {
             {trick.masteredAt && ` · Mastered ${formatDate(trick.masteredAt)}`}
           </div>
         </div>
-        <div className="flex items-center gap-1">
-          {nextStatus && (
+        {canWrite && (
+          <div className="flex items-center gap-1">
+            {nextStatus && (
+              <button
+                onClick={() => handleStatusChange(trick.id, nextStatus)}
+                disabled={isPending}
+                className="px-2 py-1 rounded-lg bg-white/60 text-xs font-medium
+                  hover:bg-white transition-colors disabled:opacity-50"
+              >
+                → {STATUS_CONFIG[nextStatus].label}
+              </button>
+            )}
             <button
-              onClick={() => handleStatusChange(trick.id, nextStatus)}
+              onClick={() => handleDelete(trick.id)}
               disabled={isPending}
-              className="px-2 py-1 rounded-lg bg-white/60 text-xs font-medium
-                hover:bg-white transition-colors disabled:opacity-50"
+              className="text-current opacity-30 hover:opacity-60 p-1 text-xs"
             >
-              → {STATUS_CONFIG[nextStatus].label}
+              ✕
             </button>
-          )}
-          <button
-            onClick={() => handleDelete(trick.id)}
-            disabled={isPending}
-            className="text-current opacity-30 hover:opacity-60 p-1 text-xs"
-          >
-            ✕
-          </button>
-        </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -153,7 +156,7 @@ export function TricksView({ tricks }: TricksViewProps) {
       )}
 
       {/* Add trick */}
-      {isAdding ? (
+      {canWrite && (isAdding ? (
         <div className="bg-white rounded-xl border border-stone-200 p-4 space-y-3">
           {/* Quick-add suggestions */}
           {suggestions.length > 0 && (
@@ -213,7 +216,7 @@ export function TricksView({ tricks }: TricksViewProps) {
         >
           + Add trick
         </button>
-      )}
+      ))}
     </div>
   );
 }

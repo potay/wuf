@@ -15,7 +15,7 @@ export default async function TricksPage() {
           Commands and tricks {user.puppyName} is learning
         </p>
       </div>
-      <TricksView tricks={tricks} />
+      <TricksView tricks={tricks} canWrite={user.canWrite} />
     </div>
   );
 }

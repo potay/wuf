@@ -1,4 +1,5 @@
 import { LogForm } from "@/components/log-form";
+import { UpgradeBanner } from "@/components/upgrade-banner";
 import { getCurrentUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +15,19 @@ export default async function LogPage() {
           Log an event with details for {user.puppyName}
         </p>
       </div>
-      <LogForm />
+      <UpgradeBanner
+        canWrite={user.canWrite}
+        subscriptionStatus={user.subscriptionStatus}
+        trialDaysLeft={user.trialDaysLeft}
+        isOwner={user.isOwner}
+      />
+      {user.canWrite ? (
+        <LogForm />
+      ) : (
+        <div className="text-center py-8 text-[var(--fg-3)]">
+          <p className="text-[14px]">Subscribe to log events</p>
+        </div>
+      )}
     </div>
   );
 }

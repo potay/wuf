@@ -7,6 +7,7 @@ import { updateProfile } from "@/actions/profile";
 
 interface ProfileFormProps {
   profile: PuppyProfile;
+  canWrite?: boolean;
 }
 
 interface FieldConfig {
@@ -63,7 +64,7 @@ const SECTIONS: { title: string; emoji: string; fields: FieldConfig[] }[] = [
   },
 ];
 
-export function ProfileForm({ profile }: ProfileFormProps) {
+export function ProfileForm({ profile, canWrite = true }: ProfileFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [form, setForm] = useState<Record<string, string>>(() => {
@@ -108,8 +109,9 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                 value={form[field.key] || ""}
                 onChange={(e) => handleChange(field.key, e.target.value)}
                 placeholder={field.placeholder}
-                className="w-full p-2.5 rounded-lg border border-stone-200 text-sm
-                  focus:outline-none focus:ring-2 focus:ring-amber-300 placeholder:text-stone-300"
+                readOnly={!canWrite}
+                className={`w-full p-2.5 rounded-lg border border-stone-200 text-sm
+                  focus:outline-none focus:ring-2 focus:ring-amber-300 placeholder:text-stone-300${!canWrite ? " bg-stone-50 text-stone-500 cursor-not-allowed" : ""}`}
               />
             </div>
           ))}
@@ -126,14 +128,15 @@ export function ProfileForm({ profile }: ProfileFormProps) {
           onChange={(e) => handleChange("notes", e.target.value)}
           placeholder="Allergies, special needs, favorite treats..."
           rows={3}
-          className="w-full p-2.5 rounded-lg border border-stone-200 text-sm
-            focus:outline-none focus:ring-2 focus:ring-amber-300 placeholder:text-stone-300 resize-none"
+          readOnly={!canWrite}
+          className={`w-full p-2.5 rounded-lg border border-stone-200 text-sm
+            focus:outline-none focus:ring-2 focus:ring-amber-300 placeholder:text-stone-300 resize-none${!canWrite ? " bg-stone-50 text-stone-500 cursor-not-allowed" : ""}`}
         />
       </section>
 
       <button
         onClick={handleSave}
-        disabled={isPending}
+        disabled={isPending || !canWrite}
         className={`w-full py-4 rounded-2xl text-white font-semibold text-base transition-all
           active:scale-[0.98] disabled:opacity-50
           ${saved ? "bg-green-500" : "bg-amber-500 hover:bg-amber-600"}`}

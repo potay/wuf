@@ -8,9 +8,10 @@ import { formatDateTime } from "@/lib/utils";
 
 interface MilestonesViewProps {
   milestones: Milestone[];
+  canWrite?: boolean;
 }
 
-export function MilestonesView({ milestones }: MilestonesViewProps) {
+export function MilestonesView({ milestones, canWrite = true }: MilestonesViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isAdding, setIsAdding] = useState(false);
@@ -91,7 +92,7 @@ export function MilestonesView({ milestones }: MilestonesViewProps) {
   return (
     <div className="space-y-4">
       {/* Add milestone */}
-      {isAdding ? (
+      {canWrite && (isAdding ? (
         <form onSubmit={handleSubmit} className="wuf-card p-5 space-y-4">
           <input
             type="text"
@@ -183,7 +184,7 @@ export function MilestonesView({ milestones }: MilestonesViewProps) {
         >
           + Add milestone
         </button>
-      )}
+      ))}
 
       {/* Milestones list */}
       {milestones.length === 0 && !isAdding && (
@@ -236,13 +237,15 @@ export function MilestonesView({ milestones }: MilestonesViewProps) {
                     {formatDateTime(milestone.occurredAt)}
                   </p>
                 </div>
-                <button
-                  onClick={() => handleDelete(milestone.id)}
-                  disabled={isPending}
-                  className="text-[var(--fg-3)] hover:text-red-500 text-xs p-1"
-                >
-                  ✕
-                </button>
+                {canWrite && (
+                  <button
+                    onClick={() => handleDelete(milestone.id)}
+                    disabled={isPending}
+                    className="text-[var(--fg-3)] hover:text-red-500 text-xs p-1"
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
             </div>
           </div>
