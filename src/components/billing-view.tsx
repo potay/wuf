@@ -31,8 +31,8 @@ export function BillingView({ canWrite, subscriptionStatus, trialDaysLeft, trial
     setLoading("portal");
     const res = await fetch("/api/stripe/portal", { method: "POST" });
     const data = await res.json();
-    if (data.url) window.location.href = data.url;
-    else setLoading(null);
+    if (data.url) window.open(data.url, "_blank");
+    setLoading(null);
   }
 
   return (
@@ -45,7 +45,7 @@ export function BillingView({ canWrite, subscriptionStatus, trialDaysLeft, trial
               Current plan
             </div>
             <div className="text-xl font-bold" style={{ color: "var(--fg)" }}>
-              {isActive ? "Wuf Pro" : "Free trial"}
+              {isActive ? "Wuf Puppy" : "Free trial"}
             </div>
           </div>
           <div className={`px-3 py-1 rounded-full text-[12px] font-bold ${
