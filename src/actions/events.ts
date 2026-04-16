@@ -2,7 +2,7 @@
 
 import { EVENT_TYPES, type EventType, type Event } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
-import { verifySession, getUserCollection } from "@/lib/session";
+import { requireWriteAccess, getUserCollection } from "@/lib/session";
 
 function docToEvent(doc: FirebaseFirestore.DocumentSnapshot): Event {
   const data = doc.data()!;
@@ -22,7 +22,7 @@ export async function logEvent(
   metadata?: string,
   occurredAt?: Date
 ) {
-  await verifySession();
+  await requireWriteAccess();
   if (!EVENT_TYPES.includes(type)) {
     throw new Error(`Invalid event type: ${type}`);
   }
@@ -41,19 +41,19 @@ export async function logEvent(
 }
 
 export async function updateEventTime(id: string, occurredAt: Date) {
-  await verifySession();
+  await requireWriteAccess();
   const col = await getUserCollection("events");
   await col.doc(id).update({ occurredAt: Timestamp.fromDate(occurredAt) });
 }
 
 export async function updateEventNotes(id: string, notes: string) {
-  await verifySession();
+  await requireWriteAccess();
   const col = await getUserCollection("events");
   await col.doc(id).update({ notes: notes || null });
 }
 
 export async function deleteEvent(id: string) {
-  await verifySession();
+  await requireWriteAccess();
   const col = await getUserCollection("events");
   await col.doc(id).delete();
 }

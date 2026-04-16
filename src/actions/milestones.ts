@@ -2,7 +2,7 @@
 
 import { type Milestone, type MilestoneMedia } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
-import { verifySession, getUserCollection } from "@/lib/session";
+import { requireWriteAccess, getUserCollection } from "@/lib/session";
 
 function docToMilestone(doc: FirebaseFirestore.DocumentSnapshot): Milestone {
   const data = doc.data()!;
@@ -23,7 +23,7 @@ export async function createMilestone(data: {
   media?: MilestoneMedia[];
   occurredAt?: Date;
 }) {
-  await verifySession();
+  await requireWriteAccess();
   const col = await getUserCollection("milestones");
   const now = new Date();
   const docRef = col.doc();
@@ -40,7 +40,7 @@ export async function createMilestone(data: {
 }
 
 export async function deleteMilestone(id: string) {
-  await verifySession();
+  await requireWriteAccess();
   const col = await getUserCollection("milestones");
   await col.doc(id).delete();
 }

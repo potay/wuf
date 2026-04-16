@@ -93,10 +93,10 @@ export default function LandingPage() {
                 className="px-8 py-4 rounded-2xl text-[16px] font-bold text-white shadow-lg"
                 style={{ background: "var(--accent)", boxShadow: "0 4px 20px rgba(196,114,58,0.3)" }}
               >
-                Start tracking free
+                Start your free trial
               </Link>
               <span className="text-[13px]" style={{ color: "var(--fg-3)" }}>
-                No credit card needed
+                14 days free, then $3/mo
               </span>
             </div>
           </div>
@@ -187,8 +187,8 @@ export default function LandingPage() {
       <section className="py-8 border-y" style={{ borderColor: "var(--border)" }}>
         <div className="max-w-5xl mx-auto px-6 flex flex-wrap items-center justify-center gap-8 text-center">
           <div>
-            <div className="text-2xl font-extrabold" style={{ color: "var(--fg)" }}>Free</div>
-            <div className="text-[12px]" style={{ color: "var(--fg-3)" }}>forever</div>
+            <div className="text-2xl font-extrabold" style={{ color: "var(--fg)" }}>$3/mo</div>
+            <div className="text-[12px]" style={{ color: "var(--fg-3)" }}>after 14-day trial</div>
           </div>
           <div className="w-px h-8" style={{ background: "var(--border)" }} />
           <div>
@@ -335,14 +335,14 @@ export default function LandingPage() {
         </h2>
         <p className="text-base mb-8 max-w-md mx-auto" style={{ color: "var(--fg-2)" }}>
           Join puppy parents who track smarter, not harder.
-          Free forever. Set up in 60 seconds.
+          Free for 14 days, then just $3/month.
         </p>
         <Link
           href="/login"
           className="inline-block px-10 py-4 rounded-2xl text-[17px] font-bold text-white shadow-xl"
           style={{ background: "var(--accent)", boxShadow: "0 8px 30px rgba(196,114,58,0.35)" }}
         >
-          Start tracking free →
+          Start your free trial →
         </Link>
       </section>
 

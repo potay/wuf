@@ -2,7 +2,7 @@
 
 import { type SocializationItem } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
-import { verifySession, getUserCollection } from "@/lib/session";
+import { requireWriteAccess, getUserCollection } from "@/lib/session";
 
 function docToItem(doc: FirebaseFirestore.DocumentSnapshot): SocializationItem {
   const data = doc.data()!;
@@ -22,7 +22,7 @@ export async function getAllSocializationItems(): Promise<SocializationItem[]> {
 }
 
 export async function toggleSocializationItem(id: string, completed: boolean) {
-  await verifySession();
+  await requireWriteAccess();
   const col = await getUserCollection("socializations");
   await col.doc(id).update({
     completedAt: completed ? Timestamp.fromDate(new Date()) : null,
@@ -30,7 +30,7 @@ export async function toggleSocializationItem(id: string, completed: boolean) {
 }
 
 export async function updateSocializationNotes(id: string, notes: string) {
-  await verifySession();
+  await requireWriteAccess();
   const col = await getUserCollection("socializations");
   await col.doc(id).update({ notes: notes || null });
 }

@@ -1,7 +1,7 @@
 "use server";
 
 import { type ScheduleItem } from "@/db/schema";
-import { verifySession, getUserCollection } from "@/lib/session";
+import { requireWriteAccess, getUserCollection } from "@/lib/session";
 
 function docToItem(doc: FirebaseFirestore.DocumentSnapshot): ScheduleItem {
   const data = doc.data()!;
@@ -25,7 +25,7 @@ export async function addScheduleItem(data: {
   activity: string;
   notes?: string;
 }) {
-  await verifySession();
+  await requireWriteAccess();
   const col = await getUserCollection("schedule");
   const docRef = col.doc();
   await docRef.set({
@@ -38,7 +38,7 @@ export async function addScheduleItem(data: {
 }
 
 export async function updateScheduleItem(id: string, data: Partial<ScheduleItem>) {
-  await verifySession();
+  await requireWriteAccess();
   const col = await getUserCollection("schedule");
   const updates: Record<string, unknown> = {};
   if (data.time !== undefined) updates.time = data.time;
@@ -49,7 +49,7 @@ export async function updateScheduleItem(id: string, data: Partial<ScheduleItem>
 }
 
 export async function deleteScheduleItem(id: string) {
-  await verifySession();
+  await requireWriteAccess();
   const col = await getUserCollection("schedule");
   await col.doc(id).delete();
 }

@@ -2,7 +2,7 @@
 
 import { type Trick, type TrickStatus } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
-import { verifySession, getUserCollection } from "@/lib/session";
+import { requireWriteAccess, getUserCollection } from "@/lib/session";
 
 function docToTrick(doc: FirebaseFirestore.DocumentSnapshot): Trick {
   const data = doc.data()!;
@@ -17,7 +17,7 @@ function docToTrick(doc: FirebaseFirestore.DocumentSnapshot): Trick {
 }
 
 export async function addTrick(data: { name: string; notes?: string }) {
-  await verifySession();
+  await requireWriteAccess();
   const col = await getUserCollection("tricks");
   const docRef = col.doc();
   const now = new Date();
@@ -33,7 +33,7 @@ export async function addTrick(data: { name: string; notes?: string }) {
 }
 
 export async function updateTrickStatus(id: string, status: TrickStatus) {
-  await verifySession();
+  await requireWriteAccess();
   const col = await getUserCollection("tricks");
   const updates: Record<string, unknown> = { status };
   if (status === "mastered") {
@@ -45,7 +45,7 @@ export async function updateTrickStatus(id: string, status: TrickStatus) {
 }
 
 export async function deleteTrick(id: string) {
-  await verifySession();
+  await requireWriteAccess();
   const col = await getUserCollection("tricks");
   await col.doc(id).delete();
 }

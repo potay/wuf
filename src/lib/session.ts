@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { db } from "@/db";
-import { type PuppyProfile } from "@/db/schema";
+import { type PuppyProfile, type SubscriptionStatus } from "@/db/schema";
 
 const SESSION_COOKIE_NAME = "__session";
 const SESSION_EXPIRY_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
@@ -80,6 +80,19 @@ export const getCurrentUser = cache(async () => {
   const puppyDoc = await db.collection("puppies").doc(puppyId).get();
   const puppyData = puppyDoc.data() || {};
 
+  // Determine write access based on trial/subscription status
+  // Grandfathered puppies (no trialEndsAt) get full access
+  const hasSubscriptionFields = !!puppyData.trialEndsAt;
+  const subscriptionStatus = (puppyData.subscriptionStatus as SubscriptionStatus) || "trialing";
+  const trialEndsAt = puppyData.trialEndsAt?.toDate?.()?.getTime?.() || 0;
+  const canWrite = !hasSubscriptionFields // grandfathered
+    || subscriptionStatus === "active"
+    || (subscriptionStatus === "trialing" && Date.now() < trialEndsAt);
+
+  const trialDaysLeft = trialEndsAt > 0
+    ? Math.max(0, Math.ceil((trialEndsAt - Date.now()) / (24 * 60 * 60 * 1000)))
+    : 0;
+
   return {
     uid: session.uid,
     email: session.email || "",
@@ -87,8 +100,22 @@ export const getCurrentUser = cache(async () => {
     puppyName: (puppyData.name as string) || "Puppy",
     inviteCode: (puppyData.inviteCode as string) || "",
     profile: puppyData as PuppyProfile,
+    canWrite,
+    subscriptionStatus,
+    trialEndsAt,
+    trialDaysLeft,
+    isOwner: puppyData.createdBy === session.uid,
   };
 });
+
+/** Throw if the current user doesn't have write access (trial expired, no subscription). */
+export async function requireWriteAccess() {
+  const user = await getCurrentUser();
+  if (!user.canWrite) {
+    throw new Error("Your free trial has ended. Subscribe to continue logging events.");
+  }
+  return user;
+}
 
 /** Get a reference to the active puppy's subcollection. All data lives under the puppy. */
 export async function getUserCollection(collectionName: string) {

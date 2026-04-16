@@ -78,6 +78,11 @@ export async function completeOnboarding(data: {
     createdBy: uid,
     members: [{ uid, role: "owner", joinedAt: new Date() }],
     createdAt: now,
+    // 14-day free trial
+    trialEndsAt: Timestamp.fromDate(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)),
+    subscriptionStatus: "trialing",
+    stripeCustomerId: null,
+    stripeSubscriptionId: null,
   });
 
   // Create/update user doc pointing to this puppy

@@ -129,12 +129,18 @@ export interface PuppyMember {
   joinedAt: Date;
 }
 
+export type SubscriptionStatus = "trialing" | "active" | "expired" | "cancelled";
+
 export interface PuppyDoc {
   name: string;
   inviteCode: string;
   members: PuppyMember[];
   createdBy: string;
   createdAt: Date;
+  trialEndsAt: Date;
+  subscriptionStatus: SubscriptionStatus;
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
 }
 
 export interface PuppyProfile {

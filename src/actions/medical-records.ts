@@ -2,7 +2,7 @@
 
 import { type MedicalRecord, type MedicalRecordCategory, type MedicalRecordFile } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
-import { verifySession, getUserCollection } from "@/lib/session";
+import { requireWriteAccess, getUserCollection } from "@/lib/session";
 
 function docToRecord(doc: FirebaseFirestore.DocumentSnapshot): MedicalRecord {
   const data = doc.data()!;
@@ -24,7 +24,7 @@ export async function createMedicalRecord(data: {
   notes?: string;
   files: MedicalRecordFile[];
 }) {
-  await verifySession();
+  await requireWriteAccess();
   const col = await getUserCollection("medical_records");
   const now = new Date();
   const docRef = col.doc();
@@ -41,7 +41,7 @@ export async function createMedicalRecord(data: {
 }
 
 export async function deleteMedicalRecord(id: string) {
-  await verifySession();
+  await requireWriteAccess();
   const col = await getUserCollection("medical_records");
   await col.doc(id).delete();
 }

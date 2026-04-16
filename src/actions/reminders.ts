@@ -3,7 +3,7 @@
 import { type Reminder } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
 import type { ReminderCategory } from "@/lib/reminder-categories";
-import { verifySession, getUserCollection } from "@/lib/session";
+import { requireWriteAccess, getUserCollection } from "@/lib/session";
 
 function docToReminder(doc: FirebaseFirestore.DocumentSnapshot): Reminder {
   const data = doc.data()!;
@@ -26,7 +26,7 @@ export async function createReminder(data: {
   dueAt: Date;
   repeatInterval?: string;
 }) {
-  await verifySession();
+  await requireWriteAccess();
   const col = await getUserCollection("reminders");
   const now = new Date();
   const docRef = col.doc();
@@ -44,7 +44,7 @@ export async function createReminder(data: {
 }
 
 export async function completeReminder(id: string) {
-  await verifySession();
+  await requireWriteAccess();
   const col = await getUserCollection("reminders");
   await col.doc(id).update({
     completedAt: Timestamp.fromDate(new Date()),
@@ -52,7 +52,7 @@ export async function completeReminder(id: string) {
 }
 
 export async function uncompleteReminder(id: string) {
-  await verifySession();
+  await requireWriteAccess();
   const col = await getUserCollection("reminders");
   await col.doc(id).update({
     completedAt: null,
@@ -60,7 +60,7 @@ export async function uncompleteReminder(id: string) {
 }
 
 export async function deleteReminder(id: string) {
-  await verifySession();
+  await requireWriteAccess();
   const col = await getUserCollection("reminders");
   await col.doc(id).delete();
 }

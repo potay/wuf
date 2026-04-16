@@ -2,7 +2,7 @@
 
 import { type Medication } from "@/db/schema";
 import { Timestamp } from "firebase-admin/firestore";
-import { verifySession, getUserCollection } from "@/lib/session";
+import { requireWriteAccess, getUserCollection } from "@/lib/session";
 
 function docToMedication(doc: FirebaseFirestore.DocumentSnapshot): Medication {
   const data = doc.data()!;
@@ -27,7 +27,7 @@ export async function addMedication(data: {
   endDate?: Date;
   notes?: string;
 }) {
-  await verifySession();
+  await requireWriteAccess();
   const col = await getUserCollection("medications");
   const docRef = col.doc();
   const now = new Date();
@@ -46,13 +46,13 @@ export async function addMedication(data: {
 }
 
 export async function toggleMedicationActive(id: string, active: boolean) {
-  await verifySession();
+  await requireWriteAccess();
   const col = await getUserCollection("medications");
   await col.doc(id).update({ active });
 }
 
 export async function deleteMedication(id: string) {
-  await verifySession();
+  await requireWriteAccess();
   const col = await getUserCollection("medications");
   await col.doc(id).delete();
 }

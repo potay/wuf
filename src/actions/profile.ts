@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { type PuppyProfile } from "@/db/schema";
-import { verifySession, getCurrentUser } from "@/lib/session";
+import { requireWriteAccess, getCurrentUser } from "@/lib/session";
 
 /** Get the puppy profile, stripping non-serializable Firestore fields. */
 export async function getProfile(): Promise<PuppyProfile> {
@@ -36,7 +36,7 @@ export async function getProfile(): Promise<PuppyProfile> {
 const NUMERIC_FIELDS = new Set(["momWeightLbs", "dadWeightLbs"]);
 
 export async function updateProfile(data: Partial<PuppyProfile>) {
-  await verifySession();
+  await requireWriteAccess();
   const user = await getCurrentUser();
   const updates: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {

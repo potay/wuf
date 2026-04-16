@@ -13,6 +13,7 @@ import { TimezoneSetter } from "@/components/timezone-setter";
 import { LocalTime } from "@/components/local-time";
 import { PuppyAvatar } from "@/components/puppy-avatar";
 import { ShareButton } from "@/components/share-button";
+import { UpgradeBanner } from "@/components/upgrade-banner";
 import { type EventType } from "@/db/schema";
 import { getUserTimezone, getDayBoundsInTimezone } from "@/lib/timezone";
 import Link from "next/link";
@@ -79,6 +80,14 @@ export default async function HomePage() {
 
       {/* Content */}
       <div className="max-w-lg mx-auto px-5 -mt-4 space-y-6 pb-6">
+        {/* Upgrade banner */}
+        <UpgradeBanner
+          canWrite={user.canWrite}
+          subscriptionStatus={user.subscriptionStatus}
+          trialDaysLeft={user.trialDaysLeft}
+          isOwner={user.isOwner}
+        />
+
         {/* Time since */}
         <TimeSince lastEvents={lastEvents} />
 
