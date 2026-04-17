@@ -101,7 +101,10 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Hero illustration - phone mockup */}
+          {/* Hero illustration - phone mockup
+              Decorative; iOS Safari sometimes mutates time-like text
+              ("9:41", "2h", etc.). Suppress hydration warnings to stop
+              Sentry hydration errors on those mutations. */}
           <div className="relative flex justify-center">
             <div
               className="w-[280px] rounded-[36px] p-3 shadow-2xl"
@@ -110,8 +113,8 @@ export default function LandingPage() {
               <div className="rounded-[28px] overflow-hidden" style={{ background: "var(--bg)" }}>
                 {/* Fake status bar */}
                 <div className="flex items-center justify-between px-5 pt-3 pb-1 text-[10px] font-semibold" style={{ color: "var(--fg-3)" }}>
-                  <span>9:41</span>
-                  <span>⚡ 100%</span>
+                  <span suppressHydrationWarning>9:41</span>
+                  <span suppressHydrationWarning>⚡ 100%</span>
                 </div>
                 {/* Fake hero header */}
                 <div className="px-4 py-4 rounded-b-[24px]" style={{ background: "var(--hero)" }}>
@@ -130,7 +133,11 @@ export default function LandingPage() {
                     {["💧", "💩", "🍖", "💦"].map((emoji, i) => (
                       <div key={i} className="bg-white rounded-xl p-2 text-center shadow-sm">
                         <div className="text-sm">{emoji}</div>
-                        <div className="text-[10px] font-bold" style={{ color: i === 1 ? "var(--urgent)" : "var(--ok)" }}>
+                        <div
+                          className="text-[10px] font-bold"
+                          style={{ color: i === 1 ? "var(--urgent)" : "var(--ok)" }}
+                          suppressHydrationWarning
+                        >
                           {["2h", "5h", "1h", "45m"][i]}
                         </div>
                       </div>
