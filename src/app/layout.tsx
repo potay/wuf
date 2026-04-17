@@ -21,6 +21,14 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Wuf",
   },
+  // Stop iOS Safari from auto-linking times/dates/phone numbers,
+  // which mutates the DOM after hydration and causes mismatches.
+  formatDetection: {
+    telephone: false,
+    date: false,
+    address: false,
+    email: false,
+  },
 };
 
 export const viewport: Viewport = {
